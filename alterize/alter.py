@@ -7,11 +7,10 @@ from alembic.operations import Operations
 from sqlalchemy import Table, Column
 from sqlalchemy.engine import Engine
 
-from sessionize.utils.sa_orm import get_table, get_primary_key_constraints
-from sessionize.utils.insert import insert_from_table
-from sessionize.utils.drop import drop_table
-from sessionize.utils.sa_orm import _get_table, _get_table_name
-from sessionize.sa.type_convert import _type_convert
+from sqlalchemize.features import get_table, get_primary_key_constraints
+from sqlalchemize.insert import insert_from_table
+from sqlalchemize.drop import drop_table
+from sqlalchemize.type_convert import sql_type
 
 
 def _get_op(
@@ -23,7 +22,7 @@ def _get_op(
 
 
 def rename_column(
-    table_name: Union[str, Table],
+    table_name: str,
     old_col_name: str,
     new_col_name: str,
     engine: Engine,
@@ -34,7 +33,6 @@ def rename_column(
 
         Returns newly reflected SqlAlchemy Table.
     """
-    table_name = _get_table_name(table_name)
     op = _get_op(engine)
     
     with op.batch_alter_table(table_name, schema=schema) as batch_op:
@@ -43,7 +41,7 @@ def rename_column(
 
 
 def drop_column(
-    table_name: Union[str, Table],
+    table_name: str,
     col_name: str,
     engine: Engine,
     schema: Optional[str] = None
@@ -53,7 +51,6 @@ def drop_column(
 
         Returns newly reflected SqlAlchemy Table.
     """
-    table_name = _get_table_name(table_name)
     op = _get_op(engine)
     with op.batch_alter_table(table_name, schema=schema) as batch_op:
         batch_op.drop_column(col_name)  # type: ignore
@@ -61,14 +58,13 @@ def drop_column(
 
 
 def add_column(
-    table_name: Union[str, Table],
+    table_name: str,
     column_name: str,
     dtype: Any,
     engine: Engine,
     schema: Optional[str] = None
 ) -> Table:
-    table_name = _get_table_name(table_name)
-    sa_type = _type_convert[dtype]
+    sa_type = sql_type(dtype)
     op = _get_op(engine)
     col = Column(column_name, sa_type)
     op.add_column(table_name, col, schema=schema)  # type: ignore
@@ -76,7 +72,7 @@ def add_column(
 
 
 def rename_table(
-    old_table_name: Union[str, Table],
+    old_table_name: str,
     new_table_name: str,
     engine: Engine,
     schema: Optional[str] = None
@@ -86,14 +82,13 @@ def rename_table(
 
         Returns newly reflected SqlAlchemy Table.
     """
-    old_table_name = _get_table_name(old_table_name)
     op = _get_op(engine)
     op.rename_table(old_table_name, new_table_name, schema=schema)  # type: ignore
     return get_table(new_table_name, engine, schema=schema)
 
 
 def copy_table(
-    table: Union[Table, str],
+    table: Table,
     new_table_name: str,
     engine: Engine,
     if_exists: str = 'replace',
@@ -105,18 +100,17 @@ def copy_table(
 
         Returns the new SqlAlchemy Table.
     """
-    table = _get_table(table, engine, schema=schema)
     op = _get_op(engine)
     if if_exists == 'replace':
         drop_table(new_table_name, engine, schema=schema)
     op.create_table(new_table_name, *table.c, table.metadata, schema=schema)  # type: ignore
     new_table = get_table(new_table_name, engine, schema=schema)
-    insert_from_table(table, new_table, engine, schema=schema)
+    insert_from_table(table, new_table, engine)
     return new_table
 
 
 def replace_primary_key(
-    table: Union[Table, str],
+    table: Table,
     column_name: str,
     engine: Engine,
     schema: Optional[str] = None
@@ -127,7 +121,6 @@ def replace_primary_key(
 
         Returns newly reflected SqlAlchemy Table.
     """
-    table = _get_table(table, engine, schema=schema)
     table_name = table.name
     op = _get_op(engine)
     keys = get_primary_key_constraints(table)
@@ -147,7 +140,7 @@ def replace_primary_key(
 
 
 def create_primary_key(
-    table_name: Union[str, Table],
+    table_name: str,
     column_name: str,
     engine: Engine,
     schema: Optional[str] = None
@@ -159,7 +152,6 @@ def create_primary_key(
 
         Returns newly reflected SqlAlchemy Table.
     """
-    table_name = _get_table_name(table_name)
     op = _get_op(engine)
     with op.batch_alter_table(table_name, schema=schema) as batch_op:
         constraint_name = f'pk_{table_name}'
@@ -170,7 +162,7 @@ def create_primary_key(
 
 
 def name_primary_key(
-    table_name: Union[str, Table],
+    table_name: str,
     column_name: str,
     engine: Engine,
     schema: Optional[str] = None
@@ -180,6 +172,5 @@ def name_primary_key(
 
         Returns newly reflected SqlAlchemy Table.
     """
-    table_name = _get_table_name(table_name)
     create_primary_key(table_name, column_name, engine, schema=schema)
     return get_table(table_name, engine, schema=schema)

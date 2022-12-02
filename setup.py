@@ -7,8 +7,8 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="alterize",
-    version="0.0.1",
-    description="Make changes to sql tables using SqlAlchmey and Alembic",
+    version="0.0.2",
+    description="Alter sql tables using SqlAlchmey and Alembic",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/eddiethedean/alterize",
@@ -23,5 +23,5 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     python_requires='>=3.9',
-    install_requires=['SQLAlchemy>=1.4', 'alembic>=1.7.5']
+    install_requires=['sqlalchemize', 'alembic>=1.7.5']
 )
