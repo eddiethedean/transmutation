@@ -1,4 +1,4 @@
-from typing import Any, Union, Optional
+from typing import Any, Sequence, Union, Optional
 
 from alembic.runtime.migration import MigrationContext
 from alembic.operations import Operations
@@ -152,12 +152,27 @@ def create_primary_key(
 
         Returns newly reflected SqlAlchemy Table.
     """
+    return create_primary_keys(table_name, [column_name], engine, schema)
+
+
+def create_primary_keys(
+    table_name: str,
+    column_names: Sequence[str],
+    engine: Engine,
+    schema: Optional[str] = None
+) -> Table:
+    """
+        Adds a primary key constraint to table.
+        Only use on a table with no primary key.
+        Use replace_primary_key on tables with a primary key.
+
+        Returns newly reflected SqlAlchemy Table.
+    """
     op = _get_op(engine)
+    constraint_name = f'pk_{table_name}'
     with op.batch_alter_table(table_name, schema=schema) as batch_op:
-        constraint_name = f'pk_{table_name}'
-        batch_op.create_unique_constraint(constraint_name, [column_name])  # type: ignore
-        batch_op.create_primary_key(constraint_name, [column_name])  # type: ignore
-        
+        batch_op.create_unique_constraint(constraint_name, column_names)  # type: ignore
+        batch_op.create_primary_key(constraint_name, column_names)  # type: ignore
     return get_table(table_name, engine, schema=schema)
 
 
