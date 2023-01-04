@@ -121,6 +121,21 @@ def replace_primary_key(
 
         Returns newly reflected SqlAlchemy Table.
     """
+    return replace_primary_keys(table, [column_name], engine, schema)
+
+
+def replace_primary_keys(
+    table: Table,
+    column_names: Sequence[str],
+    engine: Engine,
+    schema: Optional[str] = None
+)-> Table:
+    """
+        Drops primary key from table columns
+        then adds primary key to column_name of table.
+
+        Returns newly reflected SqlAlchemy Table.
+    """
     table_name = table.name
     op = _get_op(engine)
     keys = get_primary_key_constraints(table)
@@ -133,9 +148,8 @@ def replace_primary_key(
         else:
             constraint_name = keys[0]
         batch_op.drop_constraint(constraint_name, type_='primary')  # type: ignore
-        batch_op.create_unique_constraint(constraint_name, table_name, [column_name])  # type: ignore
-        batch_op.create_primary_key(constraint_name, [column_name])  # type: ignore
-        
+        batch_op.create_unique_constraint(constraint_name, column_names)  # type: ignore
+        batch_op.create_primary_key(constraint_name, column_names)  # type: ignore
     return get_table(table_name, engine)
 
 
