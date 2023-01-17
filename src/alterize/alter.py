@@ -6,6 +6,7 @@ from alembic.operations import Operations
 # TODO: replace with interfaces
 from sqlalchemy import Table, Column
 from sqlalchemy.engine import Engine
+from sqlalchemy.orm.session import Session
 
 from sqlalchemize.features import get_table, get_primary_key_constraints
 from sqlalchemize.insert import insert_from_table
