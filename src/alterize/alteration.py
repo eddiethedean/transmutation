@@ -58,6 +58,7 @@ class DropColumn(Alteration):
     def upgrade(self) -> sa.Table:
         table = get_table(self.table_name, self.engine, self.schema)
         self.dtype = _sql_to_python[type(get_column_types(table)[self.col_name])]
+        self.table_copy = alt.copy_table(table, f'%copy%{self.table_name}', self.engine, schema=self.schema)
         return alt.drop_column(
             self.table_name,
             self.col_name,
@@ -73,6 +74,7 @@ class DropColumn(Alteration):
             self.engine,
             self.schema
         )
+        # TODO: add back column values
 
 
 @dataclass
