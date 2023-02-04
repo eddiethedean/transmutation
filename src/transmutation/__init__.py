@@ -1,4 +1,4 @@
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 from transmutation.alter import rename_table, rename_column, add_column, drop_column
 from transmutation.alter import create_primary_key, replace_primary_key, copy_table

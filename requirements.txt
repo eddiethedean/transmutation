@@ -1,2 +1,2 @@
-sqlalchemize
+fullmetalalchemy
 alembic>=1.7.5
