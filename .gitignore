@@ -1,7 +1,7 @@
 creds.py
 notebooks/
-src/alterize.egg-info/
-src/alterize/__pycache__/
+src/transmutation.egg-info/
+src/transmutation/__pycache__/
 dist/
 build/
 .vscode/

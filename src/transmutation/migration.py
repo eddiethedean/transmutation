@@ -4,8 +4,8 @@ from sqlalchemy.engine import Engine
 import sqlalchemy as sa
 from alembic.operations import Operations
 
-from alterize.alter import _get_op
-from alterize.alteration import AddColumn, CopyTable, DropColumn, RenameColumn, RenameTable
+from transmutation.alter import _get_op
+from transmutation.alteration import AddColumn, CopyTable, DropColumn, RenameColumn, RenameTable
 
 
 class Alteration(Protocol):
