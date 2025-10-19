@@ -4,7 +4,6 @@ import unittest
 
 from setup_test import sqlite_setup, postgres_setup
 from fullmetalalchemy.features import get_table
-from transmutation.exceptions import ValidationError, TableError
 
 from transmutation.table import (
     rename_table,
@@ -16,7 +15,6 @@ from transmutation.table import (
 
 import sqlalchemy as sa
 from sqlalchemy import Column, Integer, String
-import sqlalchemy.exc as sa_exc
 
 
 class TestRenameTable(unittest.TestCase):
@@ -58,7 +56,7 @@ class TestCreateTable(unittest.TestCase):
             Column('email', String(100))
         ]
         
-        table = create_table('new_users', columns, engine, schema=schema)
+        create_table('new_users', columns, engine, schema=schema)
         
         # Verify table was created
         inspector = sa.inspect(engine)

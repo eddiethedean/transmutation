@@ -4,18 +4,14 @@ import unittest
 
 from setup_test import sqlite_setup, postgres_setup
 from fullmetalalchemy.features import get_table
-from transmutation.exceptions import ValidationError, ConstraintError
 
 from transmutation.constraint import (
     create_unique_constraint,
     create_check_constraint,
     drop_constraint,
-    create_primary_key,
-    create_primary_keys,
 )
 
 import sqlalchemy as sa
-import sqlalchemy.exc as sa_exc
 
 
 class TestCreateUniqueConstraint(unittest.TestCase):

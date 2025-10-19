@@ -1,6 +1,6 @@
 """Table operations for database schema modifications."""
 
-from typing import Optional, List, Any
+from typing import Optional, List
 
 from sqlalchemy import Table, Column, MetaData, text
 from sqlalchemy.engine import Engine
@@ -15,7 +15,7 @@ from transmutation.utils import (
     validate_table_exists,
     table_exists
 )
-from transmutation.exceptions import TableError, ValidationError
+from transmutation.exceptions import TableError
 
 
 def rename_table(

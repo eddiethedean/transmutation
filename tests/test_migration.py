@@ -2,14 +2,13 @@
 
 import unittest
 
-from setup_test import sqlite_setup, postgres_setup
+from setup_test import sqlite_setup
 from fullmetalalchemy.features import get_table
-from transmutation.exceptions import MigrationError, RollbackError
+from transmutation.exceptions import MigrationError
 
 from transmutation.migration import Migration
 
 import sqlalchemy as sa
-import sqlalchemy.exc as sa_exc
 
 
 class TestMigrationBasic(unittest.TestCase):

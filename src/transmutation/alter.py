@@ -8,7 +8,7 @@ For new code, prefer importing from specific modules:
 - transmutation.constraint
 """
 
-from typing import Any, Sequence, Optional
+from typing import Optional
 
 from sqlalchemy import Table
 from sqlalchemy.engine import Engine

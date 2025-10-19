@@ -4,12 +4,10 @@ import unittest
 
 from setup_test import sqlite_setup, postgres_setup
 from fullmetalalchemy.features import get_table
-from transmutation.exceptions import ValidationError, IndexError as TransmutationIndexError
 
 from transmutation.index import create_index, drop_index, create_unique_index
 
 import sqlalchemy as sa
-import sqlalchemy.exc as sa_exc
 
 
 class TestCreateIndex(unittest.TestCase):

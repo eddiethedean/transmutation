@@ -1,10 +1,10 @@
 """Enhanced migration system for managing reversible database operations."""
 
-from typing import Any, Optional, Protocol, List, Union, Sequence
+from typing import Any, Optional, Protocol, List, Union
 from contextlib import contextmanager
 
 from sqlalchemy.engine import Engine
-from sqlalchemy import Table, Column, text
+from sqlalchemy import Column, text
 import sqlalchemy as sa
 from alembic.operations import Operations
 

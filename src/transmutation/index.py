@@ -13,7 +13,7 @@ from transmutation.utils import (
     validate_column_exists,
     index_exists
 )
-from transmutation.exceptions import IndexError as TransmutationIndexError, ValidationError
+from transmutation.exceptions import IndexError as TransmutationIndexError
 
 
 def create_index(

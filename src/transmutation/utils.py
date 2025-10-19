@@ -1,14 +1,14 @@
 """Utility functions for transmutation operations."""
 
-from typing import Optional, List, Any
+from typing import Optional, List
 from contextlib import contextmanager
 
 from sqlalchemy.engine import Engine
-from sqlalchemy import Table, inspect
+from sqlalchemy import inspect
 from alembic.runtime.migration import MigrationContext
 from alembic.operations import Operations
 
-from transmutation.exceptions import ValidationError, TableError
+from transmutation.exceptions import ValidationError
 
 
 def _get_op(engine: Engine) -> Operations:

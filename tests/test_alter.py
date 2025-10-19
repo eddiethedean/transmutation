@@ -1,12 +1,10 @@
 import unittest
 
 from setup_test import sqlite_setup, postgres_setup
-from sqlalchemize.select import select_records_all
 from sqlalchemize.features import get_table, get_column
-from transmutation.exceptions import ForceFail
 
 from transmutation.alter import rename_column, drop_column, add_column, rename_table
-from transmutation.alter import copy_table, replace_primary_key, name_primary_key
+from transmutation.alter import copy_table
 
 import sqlalchemy as sa
 import sqlalchemy.exc as sa_exc
