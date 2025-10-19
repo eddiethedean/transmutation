@@ -6,10 +6,9 @@ import sqlalchemy.ext.declarative as sa_declarative
 import sqlalchemy.engine as sa_engine
 import sqlalchemy.orm.session as sa_session
 
-# from creds import postgres_url, mysql_url
-
-postgres_url = ''
-mysql_url = ''
+# Default URLs (empty means skip postgres tests unless fixture is provided)
+postgres_url = None
+mysql_url = None
 
 
 def setup(connection_string: str, schema: Optional[str] = None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:
@@ -69,9 +68,22 @@ def sqlite_setup(path='sqlite:///data/test.db', schema=None) -> Tuple[sa_engine.
     return setup(path, schema=schema)
 
 
-def postgres_setup(postgres_url=postgres_url, schema=None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:
-    path = postgres_url
-    return setup(path, schema=schema)
+def postgres_setup(postgres_url=None, schema=None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:
+    """
+    Setup PostgreSQL test database.
+    
+    Args:
+        postgres_url: PostgreSQL connection URL. If None, will skip test.
+        schema: Optional schema name
+        
+    Returns:
+        Tuple of (engine, people_table, places_table)
+    """
+    if postgres_url is None:
+        import pytest
+        pytest.skip("PostgreSQL URL not provided - install pytest-postgresql or set postgres_url")
+    
+    return setup(postgres_url, schema=schema)
 
 
 def mysql_setup(shema=None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:
