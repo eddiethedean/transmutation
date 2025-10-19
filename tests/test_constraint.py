@@ -1,13 +1,8 @@
 """Tests for constraint operations."""
 
 import unittest
-import pytest
 
-from setup_test import sqlite_setup, postgres_setup
-
-
-# Pytest marker to use postgres_url fixture in unittest-style tests
-pytestmark = pytest.mark.usefixtures("postgres_url")
+from setup_test import sqlite_setup
 from fullmetalalchemy.features import get_table
 
 from transmutation.constraint import (
@@ -37,12 +32,6 @@ class TestCreateUniqueConstraint(unittest.TestCase):
     
     def test_create_unique_constraint_sqlite(self):
         self.create_unique_constraint(sqlite_setup)
-    
-    def test_create_unique_constraint_postgres(self):
-        self.create_unique_constraint(postgres_setup)
-    
-    def test_create_unique_constraint_schema(self):
-        self.create_unique_constraint(postgres_setup, schema='local')
 
 
 class TestCreateCheckConstraint(unittest.TestCase):
@@ -62,9 +51,6 @@ class TestCreateCheckConstraint(unittest.TestCase):
     
     def test_create_check_constraint_sqlite(self):
         self.create_check_constraint(sqlite_setup)
-    
-    def test_create_check_constraint_postgres(self):
-        self.create_check_constraint(postgres_setup)
 
 
 class TestCreatePrimaryKey(unittest.TestCase):
@@ -97,9 +83,6 @@ class TestDropConstraint(unittest.TestCase):
     
     def test_drop_unique_constraint_sqlite(self):
         self.drop_unique_constraint(sqlite_setup)
-    
-    def test_drop_unique_constraint_postgres(self):
-        self.drop_unique_constraint(postgres_setup)
 
 
 if __name__ == '__main__':

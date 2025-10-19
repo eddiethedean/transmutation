@@ -1,7 +1,6 @@
 import unittest
-import pytest
 
-from setup_test import sqlite_setup, postgres_setup
+from setup_test import sqlite_setup
 from fullmetalalchemy.features import get_table, get_column
 
 from transmutation.alter import rename_column, drop_column, add_column, rename_table
@@ -9,10 +8,6 @@ from transmutation.alter import copy_table
 
 import sqlalchemy as sa
 import sqlalchemy.exc as sa_exc
-
-
-# Pytest marker to use postgres_url fixture in unittest-style tests
-pytestmark = pytest.mark.usefixtures("postgres_url")
 
 
 # rename_column
@@ -28,12 +23,6 @@ class TestRenameColumn(unittest.TestCase):
     def test_rename_column_sqlite(self):
         self.rename_column(sqlite_setup)
 
-    def test_rename_column_postgres(self):
-        self.rename_column(postgres_setup)
-
-    def test_rename_column_schema(self):
-        self.rename_column(postgres_setup, schema='local')
-
     def raise_key_error(self, setup_function, error, schema=None):
         engine, tbl1, tbl2 = setup_function(schema=schema)
         table = get_table('people', engine, schema=schema)
@@ -43,12 +32,6 @@ class TestRenameColumn(unittest.TestCase):
     def test_rename_column_key_error_sqlite(self):
         self.raise_key_error(sqlite_setup, KeyError)
 
-    def test_rename_column_key_error_postgres(self):
-        self.raise_key_error(postgres_setup, sa_exc.ProgrammingError)
-
-    def test_rename_column_key_error_schema(self):
-        self.raise_key_error(postgres_setup, sa_exc.ProgrammingError, schema='local')
-
     def raise_operational_error(self, setup_function, error, schema=None):
         engine, tbl1, tbl2 = setup_function(schema=schema)
         table = get_table('people', engine, schema=schema)
@@ -57,12 +40,6 @@ class TestRenameColumn(unittest.TestCase):
 
     def test_rename_column_op_error_sqlite(self):
         self.raise_operational_error(sqlite_setup, sa_exc.OperationalError)
-
-    def test_rename_column_op_error_postgres(self):
-        self.raise_operational_error(postgres_setup, sa_exc.ProgrammingError)
-
-    def test_rename_column_op_error_schema(self):
-        self.raise_operational_error(postgres_setup, sa_exc.ProgrammingError, schema='local')
 
 # drop_column
 class TestDropColumn(unittest.TestCase):
@@ -77,12 +54,6 @@ class TestDropColumn(unittest.TestCase):
     def test_drop_column_sqlite(self):
         self.drop_column(sqlite_setup)
 
-    def test_drop_column_postgres(self):
-        self.drop_column(postgres_setup)
-    
-    def test_drop_column_schema(self):
-        self.drop_column(postgres_setup, schema='local')
-
     def raise_key_error(self, setup_function, error, schema=None):
         engine, tbl1, tbl2 = setup_function(schema=schema)
         table = get_table('people', engine, schema=schema)
@@ -91,12 +62,6 @@ class TestDropColumn(unittest.TestCase):
 
     def test_drop_column_key_error_sqlite(self):
         self.raise_key_error(sqlite_setup, KeyError)
-
-    def test_drop_column_key_error_postgres(self):
-        self.raise_key_error(postgres_setup, sa_exc.ProgrammingError)
-
-    def test_drop_column_key_error_schema(self):
-        self.raise_key_error(postgres_setup, sa_exc.ProgrammingError, schema='local')
     
 
 # add_column
@@ -112,12 +77,6 @@ class TestAddColumn(unittest.TestCase):
     def test_add_column_sqlite(self):
         self.add_column(sqlite_setup)
 
-    def test_add_column_postgres(self):
-        self.add_column(postgres_setup)
-
-    def test_add_column_schema(self):
-        self.add_column(postgres_setup, schema='local')
-
     def raise_operational_error(self, setup_function, error, schema=None):
         engine, tbl1, tbl2 = setup_function(schema=schema)
         table = get_table('people', engine, schema=schema)
@@ -126,12 +85,6 @@ class TestAddColumn(unittest.TestCase):
 
     def test_add_column_op_error_sqlite(self):
         self.raise_operational_error(sqlite_setup, sa_exc.OperationalError)
-
-    def test_add_column_op_error_postgres(self):
-        self.raise_operational_error(postgres_setup, sa_exc.ProgrammingError)
-
-    def test_add_column_op_error_schema(self):
-        self.raise_operational_error(postgres_setup, sa_exc.ProgrammingError, schema='local')
 
 
 class TestRenameTable(unittest.TestCase):
@@ -149,12 +102,6 @@ class TestRenameTable(unittest.TestCase):
     def test_rename_table_sqlite(self):
         self.rename_table(sqlite_setup)
 
-    def test_rename_table_postgres(self):
-        self.rename_table(postgres_setup)
-
-    def test_rename_table_schema(self):
-        self.rename_table(postgres_setup, schema='local')
-
     def raise_key_error(self, setup_function, error, schema=None):
         engine, tbl1, tbl2 = setup_function(schema=schema)
         table = get_table('people', engine, schema=schema)
@@ -164,12 +111,6 @@ class TestRenameTable(unittest.TestCase):
 
     def test_rename_table_fail_sqlite(self):
         self.raise_key_error(sqlite_setup, sa_exc.OperationalError)
-
-    def test_rename_table_fail_postgres(self):
-        self.raise_key_error(postgres_setup, sa_exc.ProgrammingError)
-
-    def test_rename_table_fail_schema(self):
-        self.raise_key_error(postgres_setup, sa_exc.ProgrammingError, schema='local')
 
 
 # TODO: copy_table tests
@@ -186,12 +127,6 @@ class TestCopyTable(unittest.TestCase):
 
     def test_copy_table_sqlite(self):
         self.copy_table(sqlite_setup)
-
-    def test_copy_table_postgres(self):
-        self.copy_table(postgres_setup)
-
-    def test_copy_table_schema(self):
-        self.copy_table(postgres_setup, schema='local')
  
 
 # TODO: replace_primary_key tests

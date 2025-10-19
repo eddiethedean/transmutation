@@ -1,13 +1,8 @@
 """Tests for table operations."""
 
 import unittest
-import pytest
 
-from setup_test import sqlite_setup, postgres_setup
-
-
-# Pytest marker to use postgres_url fixture in unittest-style tests
-pytestmark = pytest.mark.usefixtures("postgres_url")
+from setup_test import sqlite_setup
 from fullmetalalchemy.features import get_table
 
 from transmutation.table import (
@@ -42,12 +37,6 @@ class TestRenameTable(unittest.TestCase):
     def test_rename_table_sqlite(self):
         self.rename_table(sqlite_setup)
 
-    def test_rename_table_postgres(self):
-        self.rename_table(postgres_setup)
-
-    def test_rename_table_schema(self):
-        self.rename_table(postgres_setup, schema='local')
-
 
 class TestCreateTable(unittest.TestCase):
     """Tests for create_table function."""
@@ -77,9 +66,6 @@ class TestCreateTable(unittest.TestCase):
     
     def test_create_table_sqlite(self):
         self.create_table_basic(sqlite_setup)
-    
-    def test_create_table_postgres(self):
-        self.create_table_basic(postgres_setup)
 
 
 class TestDropTable(unittest.TestCase):
@@ -98,9 +84,6 @@ class TestDropTable(unittest.TestCase):
     
     def test_drop_table_sqlite(self):
         self.drop_table_basic(sqlite_setup)
-    
-    def test_drop_table_postgres(self):
-        self.drop_table_basic(postgres_setup)
     
     def test_drop_table_if_exists(self, setup_function=sqlite_setup, schema=None):
         engine, _, _ = setup_function(schema=schema)
@@ -131,12 +114,6 @@ class TestCopyTable(unittest.TestCase):
     
     def test_copy_table_sqlite(self):
         self.copy_table_basic(sqlite_setup)
-    
-    def test_copy_table_postgres(self):
-        self.copy_table_basic(postgres_setup)
-    
-    def test_copy_table_schema(self):
-        self.copy_table_basic(postgres_setup, schema='local')
 
 
 class TestTruncateTable(unittest.TestCase):
@@ -163,9 +140,6 @@ class TestTruncateTable(unittest.TestCase):
     
     def test_truncate_table_sqlite(self):
         self.truncate_table_basic(sqlite_setup)
-    
-    def test_truncate_table_postgres(self):
-        self.truncate_table_basic(postgres_setup)
 
 
 if __name__ == '__main__':

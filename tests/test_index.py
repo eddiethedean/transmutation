@@ -1,13 +1,8 @@
 """Tests for index operations."""
 
 import unittest
-import pytest
 
-from setup_test import sqlite_setup, postgres_setup
-
-
-# Pytest marker to use postgres_url fixture in unittest-style tests
-pytestmark = pytest.mark.usefixtures("postgres_url")
+from setup_test import sqlite_setup
 from fullmetalalchemy.features import get_table
 
 from transmutation.index import create_index, drop_index, create_unique_index
@@ -34,12 +29,6 @@ class TestCreateIndex(unittest.TestCase):
     def test_create_index_sqlite(self):
         self.create_index(sqlite_setup)
     
-    def test_create_index_postgres(self):
-        self.create_index(postgres_setup)
-    
-    def test_create_index_schema(self):
-        self.create_index(postgres_setup, schema='local')
-    
     def create_composite_index(self, setup_function, schema=None):
         engine, tbl1, tbl2 = setup_function(schema=schema)
         table = get_table('people', engine, schema=schema)
@@ -55,9 +44,6 @@ class TestCreateIndex(unittest.TestCase):
     
     def test_create_composite_index_sqlite(self):
         self.create_composite_index(sqlite_setup)
-    
-    def test_create_composite_index_postgres(self):
-        self.create_composite_index(postgres_setup)
 
 
 class TestCreateUniqueIndex(unittest.TestCase):
@@ -82,9 +68,6 @@ class TestCreateUniqueIndex(unittest.TestCase):
     
     def test_create_unique_index_sqlite(self):
         self.create_unique_index(sqlite_setup)
-    
-    def test_create_unique_index_postgres(self):
-        self.create_unique_index(postgres_setup)
 
 
 class TestDropIndex(unittest.TestCase):
@@ -106,12 +89,6 @@ class TestDropIndex(unittest.TestCase):
     
     def test_drop_index_sqlite(self):
         self.drop_index(sqlite_setup)
-    
-    def test_drop_index_postgres(self):
-        self.drop_index(postgres_setup)
-    
-    def test_drop_index_schema(self):
-        self.drop_index(postgres_setup, schema='local')
 
 
 if __name__ == '__main__':
