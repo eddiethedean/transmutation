@@ -1,6 +1,6 @@
 """Table operations for database schema modifications."""
 
-from typing import Optional, List
+from typing import Optional, List, Any
 
 from sqlalchemy import Table, Column, MetaData, text
 from sqlalchemy.engine import Engine
@@ -62,7 +62,7 @@ def rename_table(
 
 def create_table(
     table_name: str,
-    columns: List[Column],
+    columns: List[Column[Any]],
     engine: Engine,
     schema: Optional[str] = None,
     if_not_exists: bool = False
@@ -267,7 +267,7 @@ def truncate_table(
 
 def create_table_as(
     table_name: str,
-    select_query: Select,
+    select_query: Select[Any],
     engine: Engine,
     schema: Optional[str] = None,
     if_not_exists: bool = False

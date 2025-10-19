@@ -256,7 +256,7 @@ class Migration:
     def create_table(
         self,
         table_name: str,
-        columns: List[Column],
+        columns: List[Column[Any]],
         schema: Optional[str] = None,
         if_not_exists: bool = False
     ) -> None:

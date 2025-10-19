@@ -1,10 +1,10 @@
 """Utility functions for transmutation operations."""
 
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from contextlib import contextmanager
 
 from sqlalchemy.engine import Engine
-from sqlalchemy import inspect
+from sqlalchemy import inspect, text as sql_text
 from alembic.runtime.migration import MigrationContext
 from alembic.operations import Operations
 
@@ -208,7 +208,7 @@ def get_foreign_keys(
     table_name: str, 
     engine: Engine, 
     schema: Optional[str] = None
-) -> List[dict]:
+) -> List[Dict[str, Any]]:
     """
     Get foreign key information for a table.
     
@@ -221,7 +221,9 @@ def get_foreign_keys(
         List of foreign key dictionaries
     """
     inspector = inspect(engine)
-    return inspector.get_foreign_keys(table_name, schema=schema)
+    fks = inspector.get_foreign_keys(table_name, schema=schema)
+    # Cast to the expected type
+    return fks  # type: ignore[return-value]
 
 
 def supports_foreign_keys(engine: Engine) -> bool:
@@ -238,7 +240,7 @@ def supports_foreign_keys(engine: Engine) -> bool:
     if is_sqlite(engine):
         # Check if foreign keys are enabled
         with engine.connect() as conn:
-            result = conn.execute("PRAGMA foreign_keys")
+            result = conn.execute(sql_text("PRAGMA foreign_keys"))
             row = result.fetchone()
             return row[0] == 1 if row else False
     return True

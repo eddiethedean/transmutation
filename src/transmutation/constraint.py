@@ -420,11 +420,14 @@ def replace_primary_keys(
         
         with op.batch_alter_table(table_name, schema=schema) as batch_op:
             # Name primary key constraint if not named (sqlite)
-            if keys[0] is None:
+            constraint_name_from_keys = keys[0] if keys else None
+            pk_columns = keys[1] if len(keys) > 1 else []
+            
+            if constraint_name_from_keys is None:
                 constraint_name = f'pk_{table_name}'
-                batch_op.create_primary_key(constraint_name, keys[1])  # type: ignore
+                batch_op.create_primary_key(constraint_name, pk_columns)  # type: ignore
             else:
-                constraint_name = keys[0]
+                constraint_name = constraint_name_from_keys
                 
             batch_op.drop_constraint(constraint_name, type_='primary')  # type: ignore
             batch_op.create_unique_constraint(constraint_name, column_names)  # type: ignore

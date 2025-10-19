@@ -243,7 +243,7 @@ class CreateTable(Alteration):
     """Alteration to create a table."""
     
     table_name: str
-    columns: List[sa.Column]
+    columns: List[sa.Column[Any]]
     engine: Engine
     schema: Optional[str] = None
     if_not_exists: bool = False
@@ -339,13 +339,18 @@ class CreateIndex(Alteration):
         )
 
     def downgrade(self) -> sa.Table:
-        return tm.index.drop_index(
+        result = tm.index.drop_index(
             self.index_name,
             self.table_name,
             self.engine,
             self.schema,
             if_exists=True
         )
+        # drop_index returns Optional[Table], ensure we return a Table
+        if result is None:
+            from fullmetalalchemy.features import get_table
+            return get_table(self.table_name, self.engine, self.schema)
+        return result
 
 
 @dataclass
@@ -359,13 +364,18 @@ class DropIndex(Alteration):
     schema: Optional[str] = None
     unique: bool = False
 
-    def upgrade(self) -> Optional[sa.Table]:
-        return tm.index.drop_index(
+    def upgrade(self) -> sa.Table:
+        result = tm.index.drop_index(
             self.index_name,
             self.table_name,
             self.engine,
             self.schema
         )
+        # drop_index returns Optional[Table], ensure we return a Table
+        if result is None:
+            from fullmetalalchemy.features import get_table
+            return get_table(self.table_name, self.engine, self.schema)
+        return result
 
     def downgrade(self) -> sa.Table:
         return tm.index.create_index(

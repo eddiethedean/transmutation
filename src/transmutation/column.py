@@ -146,7 +146,7 @@ def add_column(
         sa_type = sql_type(dtype)
         op = _get_op(engine)
         
-        col = Column(
+        col: Column[Any] = Column(
             column_name, 
             sa_type,
             nullable=nullable,
@@ -169,7 +169,7 @@ def alter_column(
     engine: Engine,
     schema: Optional[str] = None,
     new_column_name: Optional[str] = None,
-    type_: Optional[Union[type, TypeEngine]] = None,
+    type_: Optional[Union[type, TypeEngine[Any]]] = None,
     nullable: Optional[bool] = None,
     default: Optional[Any] = None,
     server_default: Optional[Any] = None,
@@ -209,14 +209,17 @@ def alter_column(
         op = _get_op(engine)
         
         # Convert Python type to SQLAlchemy type if needed
+        converted_type: Optional[TypeEngine[Any]] = None
         if type_ is not None and not isinstance(type_, TypeEngine):
-            type_ = sql_type(type_)
+            converted_type = sql_type(type_)
+        elif type_ is not None:
+            converted_type = type_  # type: ignore
         
         with op.batch_alter_table(table_name, schema=schema) as batch_op:
             batch_op.alter_column(
                 column_name,
                 new_column_name=new_column_name,
-                type_=type_,
+                type_=converted_type,
                 nullable=nullable,
                 server_default=server_default,
                 comment=comment
