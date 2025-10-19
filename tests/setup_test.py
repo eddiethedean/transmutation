@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import sqlalchemy as sa
 import sqlalchemy.schema as sa_schema
@@ -12,7 +12,7 @@ postgres_url = ''
 mysql_url = ''
 
 
-def setup(connection_string: str, schema: Optional[str] = None) -> tuple[sa_engine.Engine, sa.Table, sa.Table]:
+def setup(connection_string: str, schema: Optional[str] = None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:
     Base = sa_declarative.declarative_base()
 
     engine = sa.create_engine(connection_string, echo=False)
@@ -65,15 +65,15 @@ def setup(connection_string: str, schema: Optional[str] = None) -> tuple[sa_engi
     return engine, People.__table__, Places.__table__
 
 
-def sqlite_setup(path='sqlite:///data/test.db', schema=None) -> tuple[sa_engine.Engine, sa.Table, sa.Table]:
+def sqlite_setup(path='sqlite:///data/test.db', schema=None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:
     return setup(path, schema=schema)
 
 
-def postgres_setup(postgres_url=postgres_url, schema=None) -> tuple[sa_engine.Engine, sa.Table, sa.Table]:
+def postgres_setup(postgres_url=postgres_url, schema=None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:
     path = postgres_url
     return setup(path, schema=schema)
 
 
-def mysql_setup(shema=None) -> tuple[sa_engine.Engine, sa.Table, sa.Table]:
+def mysql_setup(shema=None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:
     path = mysql_url
     return setup(path, schema=shema)

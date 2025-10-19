@@ -1,7 +1,7 @@
 import unittest
 
 from setup_test import sqlite_setup, postgres_setup
-from sqlalchemize.features import get_table, get_column
+from fullmetalalchemy.features import get_table, get_column
 
 from transmutation.alter import rename_column, drop_column, add_column, rename_table
 from transmutation.alter import copy_table
