@@ -8,7 +8,6 @@ from transmutation.alter import copy_table
 from transmutation.exceptions import ValidationError, ColumnError, TableError
 
 import sqlalchemy as sa
-import sqlalchemy.exc as sa_exc
 
 
 # rename_column
