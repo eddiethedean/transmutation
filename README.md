@@ -13,6 +13,8 @@ A comprehensive database migration and schema alteration tool built on SQLAlchem
 - **Database Support**: SQLite, PostgreSQL, MySQL, and more via SQLAlchemy
 - **Simple API**: Easy-to-use functions for common operations
 - **Advanced Features**: Batch operations, transaction management, custom SQL
+- **Validation**: Automatic validation of operations before execution
+- **Error Handling**: Comprehensive exception hierarchy for precise error handling
 
 ## Installation
 
@@ -354,7 +356,7 @@ migration = tm.Migration(engine, auto_transaction=False)
 
 ### Schema Support
 
-All operations support schema specification for databases that use schemas:
+All operations support schema specification for databases that use schemas (PostgreSQL):
 
 ```python
 # PostgreSQL schema support
@@ -376,7 +378,7 @@ result = migration.execute_sql(
 
 ### Validation
 
-Transmutation automatically validates operations:
+Transmutation automatically validates operations before execution:
 
 ```python
 try:
@@ -430,31 +432,30 @@ except tm.RollbackError as e:
     print(f"Rollback failed: {e}")
 ```
 
-Available exceptions:
-- `TransmutationError` - Base exception
+### Available Exceptions
+
+- `TransmutationError` - Base exception for all transmutation errors
 - `MigrationError` - Migration operation failed
 - `ColumnError` - Column operation failed
 - `TableError` - Table operation failed
 - `ConstraintError` - Constraint operation failed
 - `IndexError` - Index operation failed
-- `ValidationError` - Validation failed
-- `RollbackError` - Rollback failed
+- `ValidationError` - Validation failed before operation
+- `RollbackError` - Rollback operation failed
 
 ## Database Support
 
 Transmutation works with any database supported by SQLAlchemy and Alembic:
 
-- **SQLite**: Full support (some features like foreign keys require configuration)
+- **SQLite**: Full support with no external dependencies
 - **PostgreSQL**: Full support with schema capabilities
 - **MySQL/MariaDB**: Full support
 - **Oracle**: Supported via SQLAlchemy
 - **Microsoft SQL Server**: Supported via SQLAlchemy
 
-### Database-Specific Notes
+### SQLite
 
-#### SQLite
-
-Foreign keys must be enabled:
+SQLite is the default and requires no additional setup. Foreign keys can be enabled:
 
 ```python
 from sqlalchemy import create_engine, event
@@ -468,66 +469,133 @@ def set_sqlite_pragma(dbapi_conn, connection_record):
     cursor.close()
 ```
 
-#### PostgreSQL
+### PostgreSQL
 
-Schemas are fully supported:
+Full schema support:
 
 ```python
 tm.create_table('users', columns, engine, schema='myschema')
 ```
 
-## Backward Compatibility
+## API Organization
 
-Version 1.0.0 maintains backward compatibility with the legacy API:
+Transmutation provides a well-organized API with operations grouped by category:
 
-```python
-# Old imports still work
-from transmutation.alter import (
-    rename_column,
-    add_column,
-    drop_column,
-    rename_table,
-    copy_table,
-    create_primary_key,
-    replace_primary_key,
-)
-
-# New recommended imports
-from transmutation import (
-    rename_column,
-    add_column,
-    drop_column,
-    rename_table,
-    copy_table,
-    create_primary_key,
-    replace_primary_key,
-)
-```
-
-## Migration from 0.x to 1.0
-
-The 1.0 release is backward compatible, but we recommend updating your imports:
-
-### Old Style (still works)
-```python
-from transmutation.alter import rename_column, add_column
-```
-
-### New Style (recommended)
 ```python
 import transmutation as tm
-# or
-from transmutation import rename_column, add_column
+
+# Or import specific modules
+from transmutation import column, table, index, constraint
+from transmutation import Migration
+
+# Column operations
+from transmutation.column import add_column, rename_column, drop_column, alter_column
+
+# Table operations  
+from transmutation.table import create_table, drop_table, rename_table, copy_table
+
+# Index operations
+from transmutation.index import create_index, drop_index, create_unique_index
+
+# Constraint operations
+from transmutation.constraint import (
+    create_foreign_key,
+    create_unique_constraint,
+    create_check_constraint,
+    drop_constraint
+)
 ```
 
-### New Features in 1.0
-- Index operations (`create_index`, `drop_index`)
-- Enhanced constraint operations (foreign keys, check constraints)
-- Table operations (`create_table`, `drop_table`, `truncate_table`)
-- `alter_column` for modifying column properties
-- Enhanced Migration class with batch operations
-- Comprehensive exception hierarchy
-- Validation utilities
+## Examples
+
+### Complete Migration Example
+
+```python
+from sqlalchemy import create_engine, Column, Integer, String
+import transmutation as tm
+
+# Setup
+engine = create_engine('sqlite:///myapp.db')
+
+# Create a new table
+columns = [
+    Column('id', Integer, primary_key=True),
+    Column('username', String(50), nullable=False),
+    Column('email', String(100))
+]
+tm.create_table('users', columns, engine)
+
+# Add indexes
+tm.create_unique_index('idx_username', 'users', 'username', engine)
+tm.create_index('idx_email', 'users', 'email', engine)
+
+# Add constraints
+tm.create_check_constraint('ck_username_length', 'users', 
+                          'LENGTH(username) >= 3', engine)
+
+# Modify existing table
+tm.add_column('users', 'created_at', 'datetime', engine,
+             server_default='CURRENT_TIMESTAMP')
+tm.alter_column('users', 'email', engine, nullable=False)
+```
+
+### Using Migration for Complex Changes
+
+```python
+from sqlalchemy import create_engine
+import transmutation as tm
+
+engine = create_engine('sqlite:///myapp.db')
+migration = tm.Migration(engine)
+
+# Queue multiple related changes
+migration.add_column('users', 'status', str, default='active')
+migration.create_index('idx_status', 'users', 'status')
+migration.add_column('users', 'last_login', 'datetime')
+
+# Create posts table with foreign key to users
+from sqlalchemy import Column, Integer, String, Text
+posts_columns = [
+    Column('id', Integer, primary_key=True),
+    Column('user_id', Integer, nullable=False),
+    Column('title', String(200), nullable=False),
+    Column('content', Text)
+]
+migration.create_table('posts', posts_columns)
+migration.create_foreign_key('fk_post_user', 'posts', 'user_id', 
+                            'users', 'id', ondelete='CASCADE')
+migration.create_index('idx_user_posts', 'posts', 'user_id')
+
+# Apply all changes atomically
+migration.upgrade()
+
+# If anything goes wrong:
+# migration.downgrade()
+```
+
+### Data Migration with Custom SQL
+
+```python
+migration = tm.Migration(engine)
+
+# Add new column
+migration.add_column('users', 'full_name', str)
+
+# Populate it with data using custom SQL
+migration.execute_sql(
+    "UPDATE users SET full_name = name || ' ' || surname WHERE surname IS NOT NULL"
+)
+migration.execute_sql(
+    "UPDATE users SET full_name = name WHERE surname IS NULL"
+)
+
+# Drop old columns
+migration.drop_column('users', 'name')
+migration.drop_column('users', 'surname')
+
+# Apply all changes
+migration.upgrade()
+```
 
 ## Development
 
@@ -540,18 +608,6 @@ cd transmutation
 
 # Install development dependencies
 pip install -e ".[dev]"
-
-# Run tests
-pytest
-
-# Run tests with coverage
-pytest --cov=transmutation
-
-# Run type checking
-mypy src
-
-# Run linter
-flake8 src tests
 ```
 
 ### Running Tests
@@ -565,6 +621,93 @@ pytest tests/test_alter.py
 
 # With coverage report
 pytest --cov=transmutation --cov-report=html
+
+# Open coverage report
+open htmlcov/index.html
+```
+
+### Code Quality
+
+```bash
+# Run type checking
+mypy src
+
+# Run linter
+ruff check src tests
+
+# Auto-fix linting issues
+ruff check --fix src tests
+
+# Format code
+black src tests
+
+# Sort imports
+isort src tests
+```
+
+## Best Practices
+
+### 1. Use Migration for Complex Changes
+
+For multiple related changes, use the Migration system:
+
+```python
+# Good - atomic, reversible
+migration = tm.Migration(engine)
+migration.add_column('users', 'email', str)
+migration.create_index('idx_email', 'users', 'email')
+migration.upgrade()
+
+# Less ideal - individual operations
+tm.add_column('users', 'email', str, engine)
+tm.create_index('idx_email', 'users', 'email', engine)
+```
+
+### 2. Always Handle Errors
+
+```python
+try:
+    migration.upgrade()
+except tm.MigrationError as e:
+    logger.error(f"Migration failed: {e}")
+    migration.downgrade()
+    raise
+```
+
+### 3. Use Validation
+
+Transmutation validates operations automatically, but you can also validate manually:
+
+```python
+from transmutation.utils import validate_table_exists, validate_column_exists
+
+validate_table_exists('users', engine)
+validate_column_exists('users', 'email', engine)
+```
+
+### 4. Test Your Migrations
+
+Always test migrations in a development environment first:
+
+```python
+def test_migration():
+    # Setup test database
+    engine = create_engine('sqlite:///:memory:')
+    
+    # Run migration
+    migration = tm.Migration(engine)
+    migration.add_column('users', 'new_col', str)
+    migration.upgrade()
+    
+    # Verify
+    from fullmetalalchemy.features import get_table
+    table = get_table('users', engine)
+    assert 'new_col' in table.columns
+    
+    # Test rollback
+    migration.downgrade()
+    table = get_table('users', engine)
+    assert 'new_col' not in table.columns
 ```
 
 ## Contributing
@@ -577,6 +720,14 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+### Development Guidelines
+
+- Add tests for new features
+- Maintain test coverage above 65%
+- Follow type hints for all functions
+- Add comprehensive docstrings
+- Run linters before committing
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -588,59 +739,6 @@ Built on top of:
 - [Alembic](https://alembic.sqlalchemy.org/) - Database migration tool
 - [fullmetalalchemy](https://github.com/kajuberdut/fullmetalalchemy) - SQLAlchemy utilities
 
-## Changelog
-
-### 1.0.0 (2024)
-
-**Major Release - Comprehensive Feature Expansion**
-
-- **New Operations**
-  - Index operations: `create_index`, `drop_index`, `create_unique_index`
-  - Constraint operations: `create_foreign_key`, `drop_constraint`, `create_unique_constraint`, `create_check_constraint`
-  - Table operations: `create_table`, `drop_table`, `truncate_table`, `create_table_as`
-  - Column operations: `alter_column` for modifying column properties
-
-- **Enhanced Migration System**
-  - Batch operations with automatic rollback
-  - Transaction management
-  - Custom SQL execution
-  - Operation tracking and status
-
-- **Improved Error Handling**
-  - Comprehensive exception hierarchy
-  - Automatic validation
-  - Better error messages
-
-- **Code Quality**
-  - Full type hints for Python 3.8+
-  - Comprehensive docstrings
-  - Modular architecture
-  - Expanded test coverage
-
-- **Backward Compatibility**
-  - All 0.x APIs continue to work
-  - Legacy imports maintained
-
-### 0.0.6
-
-- Initial release
-- Basic column operations
-- Basic table operations
-- Primary key management
-- Simple migration system
-
 ## Support
 
-For issues, questions, or contributions, please visit:
-- GitHub Issues: https://github.com/odosmatthews/transmutation/issues
-- Documentation: https://github.com/odosmatthews/transmutation
-
-## Roadmap
-
-Future enhancements planned:
-- CLI tool for migrations
-- Migration file generation
-- Auto-generate migrations from model changes
-- More database-specific optimizations
-- Enhanced schema comparison tools
-
+For issues, questions, or contributions, please visit the GitHub repository.
