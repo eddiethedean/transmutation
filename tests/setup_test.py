@@ -1,4 +1,5 @@
 from typing import Optional, Tuple
+import pytest
 
 import sqlalchemy as sa
 import sqlalchemy.schema as sa_schema
@@ -6,9 +7,15 @@ import sqlalchemy.ext.declarative as sa_declarative
 import sqlalchemy.engine as sa_engine
 import sqlalchemy.orm.session as sa_session
 
-# Default URLs (empty means skip postgres tests unless fixture is provided)
+# Default URLs (will be set by fixtures if available)
 postgres_url = None
 mysql_url = None
+
+
+def set_postgres_url(url: str):
+    """Set the global postgres URL (used by fixtures)."""
+    global postgres_url
+    postgres_url = url
 
 
 def setup(connection_string: str, schema: Optional[str] = None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:
@@ -68,22 +75,25 @@ def sqlite_setup(path='sqlite:///data/test.db', schema=None) -> Tuple[sa_engine.
     return setup(path, schema=schema)
 
 
-def postgres_setup(postgres_url=None, schema=None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:
+def postgres_setup(postgres_url_param=None, schema=None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:
     """
     Setup PostgreSQL test database.
     
     Args:
-        postgres_url: PostgreSQL connection URL. If None, will skip test.
+        postgres_url_param: PostgreSQL connection URL. If None, uses global postgres_url.
         schema: Optional schema name
         
     Returns:
         Tuple of (engine, people_table, places_table)
     """
-    if postgres_url is None:
+    # Use global postgres_url if no parameter provided
+    url_to_use = postgres_url_param if postgres_url_param is not None else postgres_url
+    
+    if url_to_use is None:
         import pytest
         pytest.skip("PostgreSQL URL not provided - install pytest-postgresql or set postgres_url")
     
-    return setup(postgres_url, schema=schema)
+    return setup(url_to_use, schema=schema)
 
 
 def mysql_setup(shema=None) -> Tuple[sa_engine.Engine, sa.Table, sa.Table]:

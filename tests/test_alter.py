@@ -1,4 +1,5 @@
 import unittest
+import pytest
 
 from setup_test import sqlite_setup, postgres_setup
 from fullmetalalchemy.features import get_table, get_column
@@ -8,6 +9,10 @@ from transmutation.alter import copy_table
 
 import sqlalchemy as sa
 import sqlalchemy.exc as sa_exc
+
+
+# Pytest marker to use postgres_url fixture in unittest-style tests
+pytestmark = pytest.mark.usefixtures("postgres_url")
 
 
 # rename_column

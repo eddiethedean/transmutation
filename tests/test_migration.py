@@ -1,8 +1,13 @@
 """Tests for the enhanced Migration class."""
 
 import unittest
+import pytest
 
 from setup_test import sqlite_setup
+
+
+# Pytest marker to use postgres_url fixture in unittest-style tests
+pytestmark = pytest.mark.usefixtures("postgres_url")
 from fullmetalalchemy.features import get_table
 from transmutation.exceptions import MigrationError
 

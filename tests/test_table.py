@@ -1,8 +1,13 @@
 """Tests for table operations."""
 
 import unittest
+import pytest
 
 from setup_test import sqlite_setup, postgres_setup
+
+
+# Pytest marker to use postgres_url fixture in unittest-style tests
+pytestmark = pytest.mark.usefixtures("postgres_url")
 from fullmetalalchemy.features import get_table
 
 from transmutation.table import (
