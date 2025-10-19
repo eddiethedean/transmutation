@@ -1,5 +1,8 @@
-flake8==3.9.2
-tox==3.24.3
-mypy===0.910
-pytest==6.2.5
-pytest-cov==2.12.1
+-r requirements.txt
+pytest>=7.0.0
+pytest-cov>=3.0.0
+mypy>=0.990
+flake8>=5.0.0
+black>=22.0.0
+isort>=5.10.0
+tox>=4.0.0
