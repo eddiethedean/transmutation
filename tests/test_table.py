@@ -74,13 +74,13 @@ class TestDropTable(unittest.TestCase):
     def drop_table_basic(self, setup_function, schema=None):
         engine, tbl1, tbl2 = setup_function(schema=schema)
         
-        # Drop an existing table
-        drop_table('addresses', engine, schema=schema)
+        # Drop an existing table (places is created by setup)
+        drop_table('places', engine, schema=schema)
         
         # Verify table was dropped
         inspector = sa.inspect(engine)
         table_names = inspector.get_table_names(schema=schema)
-        self.assertNotIn('addresses', table_names)
+        self.assertNotIn('places', table_names)
     
     def test_drop_table_sqlite(self):
         self.drop_table_basic(sqlite_setup)

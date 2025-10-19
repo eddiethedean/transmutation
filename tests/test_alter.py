@@ -5,6 +5,7 @@ from fullmetalalchemy.features import get_table, get_column
 
 from transmutation.alter import rename_column, drop_column, add_column, rename_table
 from transmutation.alter import copy_table
+from transmutation.exceptions import ValidationError, ColumnError, TableError
 
 import sqlalchemy as sa
 import sqlalchemy.exc as sa_exc
@@ -30,7 +31,7 @@ class TestRenameColumn(unittest.TestCase):
             rename_column(table.name, 'names', 'first_name', engine, schema=schema)
 
     def test_rename_column_key_error_sqlite(self):
-        self.raise_key_error(sqlite_setup, KeyError)
+        self.raise_key_error(sqlite_setup, ValidationError)
 
     def raise_operational_error(self, setup_function, error, schema=None):
         engine, tbl1, tbl2 = setup_function(schema=schema)
@@ -39,7 +40,7 @@ class TestRenameColumn(unittest.TestCase):
             rename_column(table.name, 'name', 'age', engine, schema=schema)
 
     def test_rename_column_op_error_sqlite(self):
-        self.raise_operational_error(sqlite_setup, sa_exc.OperationalError)
+        self.raise_operational_error(sqlite_setup, ColumnError)
 
 # drop_column
 class TestDropColumn(unittest.TestCase):
@@ -61,7 +62,7 @@ class TestDropColumn(unittest.TestCase):
             drop_column(table.name, 'names', engine, schema=schema)
 
     def test_drop_column_key_error_sqlite(self):
-        self.raise_key_error(sqlite_setup, KeyError)
+        self.raise_key_error(sqlite_setup, ValidationError)
     
 
 # add_column
@@ -84,7 +85,7 @@ class TestAddColumn(unittest.TestCase):
             add_column(table.name, 'name', str, engine, schema=schema)
 
     def test_add_column_op_error_sqlite(self):
-        self.raise_operational_error(sqlite_setup, sa_exc.OperationalError)
+        self.raise_operational_error(sqlite_setup, ColumnError)
 
 
 class TestRenameTable(unittest.TestCase):
@@ -110,7 +111,7 @@ class TestRenameTable(unittest.TestCase):
             rename_table(table.name, new_table_name, engine, schema=schema)
 
     def test_rename_table_fail_sqlite(self):
-        self.raise_key_error(sqlite_setup, sa_exc.OperationalError)
+        self.raise_key_error(sqlite_setup, TableError)
 
 
 # TODO: copy_table tests
@@ -120,7 +121,7 @@ class TestCopyTable(unittest.TestCase):
         table = get_table('people', engine, schema=schema)
         new_table_name = 'employees'
         table_names = sa.inspect(engine).get_table_names(schema=schema)
-        copy_table(table.name, new_table_name, engine, schema=schema)
+        copy_table(table, new_table_name, engine, schema=schema)  # Pass table object, not table.name
         table_names.append(new_table_name)
         new_table_names = sa.inspect(engine).get_table_names(schema=schema)
         self.assertSetEqual(set(table_names), set(new_table_names))
