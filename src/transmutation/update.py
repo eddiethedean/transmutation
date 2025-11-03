@@ -1,5 +1,7 @@
 from typing import Any
+
 import sqlalchemy as sa
+from sqlalchemy.engine import Engine
 import sqlalchemy.orm.session as sa_session
 
 
@@ -16,7 +18,7 @@ def set_column_values_session(
 
 
 def set_column_values(
-    table: sa.Table, column_name: str, value: Any, engine: sa.engine.Engine
+    table: sa.Table, column_name: str, value: Any, engine: Engine
 ) -> None:
     session = sa_session.Session(engine)
     try:

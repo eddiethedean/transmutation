@@ -799,6 +799,85 @@ Built on top of:
 - [Alembic](https://alembic.sqlalchemy.org/) - Database migration tool
 - [fullmetalalchemy](https://github.com/kajuberdut/fullmetalalchemy) - SQLAlchemy utilities
 
+## Version History
+
+### 1.3.0 (Latest)
+
+**Multi-Database Testing Infrastructure**
+- Added PostgreSQL and MySQL test support using ephemeral test servers
+- Tests can run against SQLite, PostgreSQL, and MySQL with pytest markers
+- Comprehensive test coverage across multiple database backends
+- See `tests/TESTING_MULTI_DB.md` for details
+
+**Testing Improvements**
+- Fixed parallel test execution issues with SQLite file conflicts
+- Optimized PostgreSQL test servers with minimal shared memory configuration
+- Improved test isolation with per-worker database instances
+- All 108 tests passing with 6 parallel workers
+
+**Code Quality**
+- Added `ty` type checker for fast type checking
+- Fixed type annotations for better compatibility
+- Improved code formatting with ruff
+- Enhanced test cleanup and resource management
+
+**Developer Experience**
+- Updated development dependencies with PostgreSQL/MySQL testing tools
+- Better documentation for multi-database testing workflows
+- Improved parallel test execution performance
+
+### 1.2.0
+
+**Dependency Upgrades**: Upgraded to fullmetalalchemy 2.4.0 and transmutation 1.1.0 for improved SQL operations and schema evolution
+
+**Code Modernization**: Replaced all SQLAlchemy Core API usage with fullmetalalchemy functions for consistency and better abstraction
+
+**Type Safety**: Added fast type checking with `ty` (Rust-based type checker) and fixed all type issues for better code quality
+
+**Improved Schema Operations**: Leveraged transmutation 1.1.0 features including improved column operations, better transaction handling, and MySQL VARCHAR length support
+
+**Performance**: Optimized MAX aggregation queries using fullmetalalchemy's `select_column_max` for efficient primary key generation
+
+**Code Quality**: Full ruff formatting and linting compliance, improved type annotations throughout the codebase
+
+**Testing**: 453 tests passing with improved test coverage and reliability
+
+### 1.1.0
+
+**Multi-Database Support**: Full PostgreSQL and MySQL compatibility with 534 tests, 150+ running on multiple databases
+
+**Database-Specific Optimizations**: Raw SQL paths for PostgreSQL/MySQL to avoid metadata lock issues
+
+**Schema Evolution Improvements**: Proper handling of MySQL VARCHAR length requirements and column rename operations
+
+**Connection Management**: Improved connection pooling and transaction handling for production databases
+
+**Transaction Fixes**: Fixed DELETE operations in complex transactions with schema changes
+
+**Testing Infrastructure**: Added `testing.postgresql` and `testing.mysqld` for isolated test environments
+
+**Performance**: Optimized table introspection using `inspect(engine)` and `autoload_with` for better transaction visibility
+
+**Code Quality**: Full ruff and mypy compliance with 0 errors
+
+### 1.0.0
+
+**Major refactoring**: Merged Table and TrackedDataFrame into unified TableDataFrame
+
+**New feature**: Column type change tracking with ALTER COLUMN support
+
+**New methods**: update_where() and delete_where() for conditional operations
+
+**Code quality**: Eliminated ~185 lines of duplicate code, created pk_utils module
+
+**Security**: Fixed SQL injection vulnerabilities
+
+**Type safety**: Full mypy compliance (0 errors)
+
+**Testing**: 446 comprehensive tests passing
+
+**Documentation**: Complete README revamp (34% more concise)
+
 ## Support
 
 For issues, questions, or contributions, please visit the GitHub repository.
