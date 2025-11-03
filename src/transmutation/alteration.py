@@ -14,7 +14,7 @@ import transmutation as tm
 
 class Alteration(Protocol):
     """Protocol for reversible database alterations."""
-    
+
     def upgrade(self) -> sa.Table:
         """Apply the alteration (forward migration)."""
         ...
@@ -26,10 +26,11 @@ class Alteration(Protocol):
 
 # Column Alterations
 
+
 @dataclass
 class RenameColumn(Alteration):
     """Alteration to rename a column."""
-    
+
     table_name: str
     old_col_name: str
     new_col_name: str
@@ -41,8 +42,8 @@ class RenameColumn(Alteration):
             self.table_name,
             self.old_col_name,
             self.new_col_name,
-            self.engine,
-            self.schema
+            engine=self.engine,
+            schema=self.schema,
         )
 
     def downgrade(self) -> sa.Table:
@@ -50,15 +51,15 @@ class RenameColumn(Alteration):
             self.table_name,
             self.new_col_name,
             self.old_col_name,
-            self.engine,
-            self.schema
+            engine=self.engine,
+            schema=self.schema,
         )
 
 
 @dataclass
 class DropColumn(Alteration):
     """Alteration to drop a column (with backup for rollback)."""
-    
+
     table_name: str
     col_name: str
     engine: Engine
@@ -70,16 +71,10 @@ class DropColumn(Alteration):
         table = get_table(self.table_name, self.engine, self.schema)
         self.dtype = _sql_to_python[type(get_column_types(table)[self.col_name])]
         self.table_copy = tm.table.copy_table(
-            table, 
-            f'%copy%{self.table_name}', 
-            self.engine, 
-            schema=self.schema
+            table, f"%copy%{self.table_name}", engine=self.engine, schema=self.schema
         )
         return tm.column.drop_column(
-            self.table_name,
-            self.col_name,
-            self.engine,
-            self.schema
+            self.table_name, self.col_name, engine=self.engine, schema=self.schema
         )
 
     def downgrade(self) -> sa.Table:
@@ -87,15 +82,15 @@ class DropColumn(Alteration):
             self.table_name,
             self.col_name,
             self.dtype,
-            self.engine,
-            self.schema
+            engine=self.engine,
+            schema=self.schema,
         )
 
 
 @dataclass
 class AddColumn(Alteration):
     """Alteration to add a column."""
-    
+
     table_name: str
     column_name: str
     dtype: Any
@@ -110,26 +105,23 @@ class AddColumn(Alteration):
             self.table_name,
             self.column_name,
             self.dtype,
-            self.engine,
-            self.schema,
-            self.nullable,
-            self.default,
-            self.server_default
+            engine=self.engine,
+            schema=self.schema,
+            nullable=self.nullable,
+            default=self.default,
+            server_default=self.server_default,
         )
 
     def downgrade(self) -> sa.Table:
         return tm.column.drop_column(
-            self.table_name,
-            self.column_name,
-            self.engine,
-            self.schema
+            self.table_name, self.column_name, engine=self.engine, schema=self.schema
         )
 
 
 @dataclass
 class AlterColumn(Alteration):
     """Alteration to modify column properties."""
-    
+
     table_name: str
     column_name: str
     engine: Engine
@@ -151,40 +143,43 @@ class AlterColumn(Alteration):
         self.original_name = self.column_name
         self.original_type = type(col.type)
         self.original_nullable = col.nullable
-        
+
         return tm.column.alter_column(
             self.table_name,
             self.column_name,
-            self.engine,
-            self.schema,
-            self.new_column_name,
-            self.type_,
-            self.nullable,
-            self.default,
-            self.server_default
+            engine=self.engine,
+            schema=self.schema,
+            new_column_name=self.new_column_name,
+            type_=self.type_,
+            nullable=self.nullable,
+            default=self.default,
+            server_default=self.server_default,
         )
 
     def downgrade(self) -> sa.Table:
         # Use the new name if column was renamed
-        current_name = self.new_column_name if self.new_column_name else self.column_name
-        
+        current_name = (
+            self.new_column_name if self.new_column_name else self.column_name
+        )
+
         return tm.column.alter_column(
             self.table_name,
             current_name,
-            self.engine,
-            self.schema,
-            self.original_name if self.new_column_name else None,
-            self.original_type,
-            self.original_nullable
+            engine=self.engine,
+            schema=self.schema,
+            new_column_name=self.original_name if self.new_column_name else None,
+            type_=self.original_type,
+            nullable=self.original_nullable,
         )
 
 
 # Table Alterations
 
+
 @dataclass
 class RenameTable(Alteration):
     """Alteration to rename a table."""
-    
+
     old_table_name: str
     new_table_name: str
     engine: Engine
@@ -194,27 +189,27 @@ class RenameTable(Alteration):
         return tm.table.rename_table(
             self.old_table_name,
             self.new_table_name,
-            self.engine,
-            self.schema
+            engine=self.engine,
+            schema=self.schema,
         )
 
     def downgrade(self) -> sa.Table:
         return tm.table.rename_table(
             self.new_table_name,
             self.old_table_name,
-            self.engine,
-            self.schema
+            engine=self.engine,
+            schema=self.schema,
         )
 
 
 @dataclass
 class CopyTable(Alteration):
     """Alteration to copy a table."""
-    
+
     table: sa.Table
     new_table_name: str
     engine: Engine
-    if_exists: str = 'replace'
+    if_exists: str = "replace"
     schema: Optional[str] = None
     copy_data: bool = True
 
@@ -222,26 +217,22 @@ class CopyTable(Alteration):
         table_copy = tm.table.copy_table(
             self.table,
             self.new_table_name,
-            self.engine,
-            self.if_exists,
-            self.schema,
-            self.copy_data
+            engine=self.engine,
+            if_exists=self.if_exists,
+            schema=self.schema,
+            copy_data=self.copy_data,
         )
         return table_copy
 
     def downgrade(self) -> sa.Table:
-        drop_table(
-            self.new_table_name,
-            self.engine,
-            schema=self.schema
-        )
+        drop_table(self.new_table_name, self.engine, schema=self.schema)
         return self.table
 
 
 @dataclass
 class CreateTable(Alteration):
     """Alteration to create a table."""
-    
+
     table_name: str
     columns: List[sa.Column[Any]]
     engine: Engine
@@ -252,17 +243,14 @@ class CreateTable(Alteration):
         return tm.table.create_table(
             self.table_name,
             self.columns,
-            self.engine,
-            self.schema,
-            self.if_not_exists
+            engine=self.engine,
+            schema=self.schema,
+            if_not_exists=self.if_not_exists,
         )
 
     def downgrade(self) -> sa.Table:
         tm.table.drop_table(
-            self.table_name,
-            self.engine,
-            self.schema,
-            if_exists=True
+            self.table_name, engine=self.engine, schema=self.schema, if_exists=True
         )
         # Return a dummy table since it's been dropped
         return sa.Table(self.table_name, sa.MetaData())
@@ -271,7 +259,7 @@ class CreateTable(Alteration):
 @dataclass
 class DropTable(Alteration):
     """Alteration to drop a table (with backup for rollback)."""
-    
+
     table_name: str
     engine: Engine
     schema: Optional[str] = None
@@ -282,19 +270,16 @@ class DropTable(Alteration):
     def upgrade(self) -> sa.Table:
         # Create backup for potential rollback
         table = get_table(self.table_name, self.engine, self.schema)
-        self.backup_name = f'%backup%{self.table_name}'
+        self.backup_name = f"%backup%{self.table_name}"
         self.backup_table = tm.table.copy_table(
-            table,
-            self.backup_name,
-            self.engine,
-            schema=self.schema
+            table, self.backup_name, engine=self.engine, schema=self.schema
         )
-        
+
         tm.table.drop_table(
             self.table_name,
-            self.engine,
-            self.schema,
-            self.cascade
+            engine=self.engine,
+            schema=self.schema,
+            cascade=self.cascade,
         )
         return sa.Table(self.table_name, sa.MetaData())
 
@@ -304,8 +289,8 @@ class DropTable(Alteration):
             restored = tm.table.copy_table(
                 self.backup_table,
                 self.table_name,
-                self.engine,
-                schema=self.schema
+                engine=self.engine,
+                schema=self.schema,
             )
             # Clean up backup
             drop_table(self.backup_name, self.engine, schema=self.schema)
@@ -315,10 +300,11 @@ class DropTable(Alteration):
 
 # Index Alterations
 
+
 @dataclass
 class CreateIndex(Alteration):
     """Alteration to create an index."""
-    
+
     index_name: str
     table_name: str
     columns: Union[str, List[str]]
@@ -332,23 +318,24 @@ class CreateIndex(Alteration):
             self.index_name,
             self.table_name,
             self.columns,
-            self.engine,
-            self.schema,
-            self.unique,
-            self.if_not_exists
+            engine=self.engine,
+            schema=self.schema,
+            unique=self.unique,
+            if_not_exists=self.if_not_exists,
         )
 
     def downgrade(self) -> sa.Table:
         result = tm.index.drop_index(
             self.index_name,
-            self.table_name,
-            self.engine,
-            self.schema,
-            if_exists=True
+            table_name=self.table_name,
+            engine=self.engine,
+            schema=self.schema,
+            if_exists=True,
         )
         # drop_index returns Optional[Table], ensure we return a Table
         if result is None:
             from fullmetalalchemy.features import get_table
+
             return get_table(self.table_name, self.engine, self.schema)
         return result
 
@@ -356,7 +343,7 @@ class CreateIndex(Alteration):
 @dataclass
 class DropIndex(Alteration):
     """Alteration to drop an index."""
-    
+
     index_name: str
     table_name: str
     columns: Union[str, List[str]]
@@ -367,13 +354,14 @@ class DropIndex(Alteration):
     def upgrade(self) -> sa.Table:
         result = tm.index.drop_index(
             self.index_name,
-            self.table_name,
-            self.engine,
-            self.schema
+            table_name=self.table_name,
+            engine=self.engine,
+            schema=self.schema,
         )
         # drop_index returns Optional[Table], ensure we return a Table
         if result is None:
             from fullmetalalchemy.features import get_table
+
             return get_table(self.table_name, self.engine, self.schema)
         return result
 
@@ -382,18 +370,19 @@ class DropIndex(Alteration):
             self.index_name,
             self.table_name,
             self.columns,
-            self.engine,
-            self.schema,
-            self.unique
+            engine=self.engine,
+            schema=self.schema,
+            unique=self.unique,
         )
 
 
 # Constraint Alterations
 
+
 @dataclass
 class CreateForeignKey(Alteration):
     """Alteration to create a foreign key constraint."""
-    
+
     constraint_name: str
     source_table: str
     source_columns: Union[str, List[str]]
@@ -411,30 +400,30 @@ class CreateForeignKey(Alteration):
             self.source_columns,
             self.referent_table,
             self.referent_columns,
-            self.engine,
-            self.schema,
-            self.onupdate,
-            self.ondelete
+            engine=self.engine,
+            schema=self.schema,
+            onupdate=self.onupdate,
+            ondelete=self.ondelete,
         )
 
     def downgrade(self) -> sa.Table:
         return tm.constraint.drop_constraint(
             self.constraint_name,
             self.source_table,
-            self.engine,
-            type_='foreignkey',
-            schema=self.schema
+            engine=self.engine,
+            type_="foreignkey",
+            schema=self.schema,
         )
 
 
 @dataclass
 class DropConstraint(Alteration):
     """Alteration to drop a constraint."""
-    
+
     constraint_name: str
     table_name: str
     engine: Engine
-    type_: str = 'foreignkey'
+    type_: str = "foreignkey"
     schema: Optional[str] = None
     # Note: Downgrade would require storing constraint details, which is complex
     # Users should use specific constraint alterations for reversible operations
@@ -443,9 +432,9 @@ class DropConstraint(Alteration):
         return tm.constraint.drop_constraint(
             self.constraint_name,
             self.table_name,
-            self.engine,
-            self.type_,
-            self.schema
+            engine=self.engine,
+            type_=self.type_,
+            schema=self.schema,
         )
 
     def downgrade(self) -> sa.Table:
@@ -458,7 +447,7 @@ class DropConstraint(Alteration):
 @dataclass
 class CreateUniqueConstraint(Alteration):
     """Alteration to create a unique constraint."""
-    
+
     constraint_name: str
     table_name: str
     columns: Union[str, List[str]]
@@ -470,24 +459,24 @@ class CreateUniqueConstraint(Alteration):
             self.constraint_name,
             self.table_name,
             self.columns,
-            self.engine,
-            self.schema
+            engine=self.engine,
+            schema=self.schema,
         )
 
     def downgrade(self) -> sa.Table:
         return tm.constraint.drop_constraint(
             self.constraint_name,
             self.table_name,
-            self.engine,
-            type_='unique',
-            schema=self.schema
+            engine=self.engine,
+            type_="unique",
+            schema=self.schema,
         )
 
 
 @dataclass
 class CreateCheckConstraint(Alteration):
     """Alteration to create a check constraint."""
-    
+
     constraint_name: str
     table_name: str
     condition: str
@@ -499,15 +488,15 @@ class CreateCheckConstraint(Alteration):
             self.constraint_name,
             self.table_name,
             self.condition,
-            self.engine,
-            self.schema
+            engine=self.engine,
+            schema=self.schema,
         )
 
     def downgrade(self) -> sa.Table:
         return tm.constraint.drop_constraint(
             self.constraint_name,
             self.table_name,
-            self.engine,
-            type_='check',
-            schema=self.schema
+            engine=self.engine,
+            type_="check",
+            schema=self.schema,
         )

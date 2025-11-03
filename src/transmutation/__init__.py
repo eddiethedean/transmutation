@@ -5,7 +5,7 @@ A comprehensive library for database schema modifications using SQLAlchemy and A
 Provides both direct operations and a migration system with rollback capabilities.
 """
 
-__version__ = '1.0.0'
+__version__ = "1.1.0"
 
 # Submodules
 from transmutation import (
@@ -100,80 +100,71 @@ from transmutation.alteration import (
 
 __all__ = [
     # Version
-    '__version__',
-    
+    "__version__",
     # Submodules
-    'column',
-    'table',
-    'index',
-    'constraint',
-    'exceptions',
-    'utils',
-    'migration',
-    'alteration',
-    'update',
-    
+    "column",
+    "table",
+    "index",
+    "constraint",
+    "exceptions",
+    "utils",
+    "migration",
+    "alteration",
+    "update",
     # Column Operations
-    'rename_column',
-    'drop_column',
-    'add_column',
-    'alter_column',
-    
+    "rename_column",
+    "drop_column",
+    "add_column",
+    "alter_column",
     # Table Operations
-    'rename_table',
-    'create_table',
-    'drop_table',
-    'copy_table',
-    'truncate_table',
-    'create_table_as',
-    
+    "rename_table",
+    "create_table",
+    "drop_table",
+    "copy_table",
+    "truncate_table",
+    "create_table_as",
     # Index Operations
-    'create_index',
-    'drop_index',
-    'create_unique_index',
-    
+    "create_index",
+    "drop_index",
+    "create_unique_index",
     # Constraint Operations
-    'create_foreign_key',
-    'drop_constraint',
-    'create_unique_constraint',
-    'create_check_constraint',
-    'create_primary_key',
-    'create_primary_keys',
-    'replace_primary_key',
-    'replace_primary_keys',
-    
+    "create_foreign_key",
+    "drop_constraint",
+    "create_unique_constraint",
+    "create_check_constraint",
+    "create_primary_key",
+    "create_primary_keys",
+    "replace_primary_key",
+    "replace_primary_keys",
     # Update Operations
-    'set_column_values_session',
-    'set_column_values',
-    
+    "set_column_values_session",
+    "set_column_values",
     # Migration System
-    'Migration',
-    
+    "Migration",
     # Exceptions
-    'TransmutationError',
-    'MigrationError',
-    'ColumnError',
-    'TableError',
-    'ConstraintError',
-    'IndexError',
-    'ValidationError',
-    'RollbackError',
-    'ForceFail',
-    
+    "TransmutationError",
+    "MigrationError",
+    "ColumnError",
+    "TableError",
+    "ConstraintError",
+    "IndexError",
+    "ValidationError",
+    "RollbackError",
+    "ForceFail",
     # Alteration Classes
-    'Alteration',
-    'RenameColumnAlteration',
-    'DropColumnAlteration',
-    'AddColumnAlteration',
-    'AlterColumnAlteration',
-    'RenameTableAlteration',
-    'CreateTableAlteration',
-    'DropTableAlteration',
-    'CopyTableAlteration',
-    'CreateIndexAlteration',
-    'DropIndexAlteration',
-    'CreateForeignKeyAlteration',
-    'CreateUniqueConstraintAlteration',
-    'CreateCheckConstraintAlteration',
-    'DropConstraintAlteration',
+    "Alteration",
+    "RenameColumnAlteration",
+    "DropColumnAlteration",
+    "AddColumnAlteration",
+    "AlterColumnAlteration",
+    "RenameTableAlteration",
+    "CreateTableAlteration",
+    "DropTableAlteration",
+    "CopyTableAlteration",
+    "CreateIndexAlteration",
+    "DropIndexAlteration",
+    "CreateForeignKeyAlteration",
+    "CreateUniqueConstraintAlteration",
+    "CreateCheckConstraintAlteration",
+    "DropConstraintAlteration",
 ]

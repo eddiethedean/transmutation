@@ -29,7 +29,7 @@ from transmutation.exceptions import MigrationError, RollbackError
 
 class Alteration(Protocol):
     """Protocol for reversible database alterations."""
-    
+
     def upgrade(self) -> sa.Table:
         """Apply the alteration (forward migration)."""
         ...
@@ -42,10 +42,10 @@ class Alteration(Protocol):
 class Migration:
     """
     Manage database schema alterations with rollback capability.
-    
+
     This class tracks alterations and allows rolling back changes
     if something goes wrong during migration.
-    
+
     Example:
         >>> from sqlalchemy import create_engine
         >>> engine = create_engine('sqlite:///test.db')
@@ -56,11 +56,11 @@ class Migration:
         >>> # If something went wrong:
         >>> migration.downgrade()  # Roll back all changes
     """
-    
+
     def __init__(self, engine: Engine, auto_transaction: bool = True) -> None:
         """
         Initialize a Migration instance.
-        
+
         Args:
             engine: SQLAlchemy Engine instance
             auto_transaction: Enable automatic transaction management (default: True)
@@ -87,7 +87,7 @@ class Migration:
     def batch_operations(self):
         """
         Context manager for batch operations with automatic rollback on error.
-        
+
         Example:
             >>> migration = Migration(engine)
             >>> with migration.batch_operations():
@@ -110,26 +110,26 @@ class Migration:
     def upgrade(self) -> Optional[sa.Table]:
         """
         Apply all queued alterations in order.
-        
+
         Returns:
             The last modified table, or None if no alterations
-            
+
         Raises:
             MigrationError: If any alteration fails
         """
         table = None
         executed = []
-        
+
         try:
             for alteration in self._upgrades:
                 table = alteration.upgrade()
                 executed.append(alteration)
                 self._add_downgrade(alteration)
-            
+
             # Clear upgrades after successful execution
             self._upgrades.clear()
             return table
-            
+
         except Exception as e:
             # Attempt automatic rollback if enabled
             if self._auto_transaction and executed:
@@ -145,23 +145,23 @@ class Migration:
     def downgrade(self) -> Optional[sa.Table]:
         """
         Reverse all applied alterations in reverse order.
-        
+
         Returns:
             The last modified table, or None if no alterations
-            
+
         Raises:
             RollbackError: If any downgrade operation fails
         """
         table = None
-        
+
         try:
             for alteration in reversed(self._downgrades):
                 table = alteration.downgrade()
-            
+
             # Clear downgrades after successful execution
             self._downgrades.clear()
             return table
-            
+
         except Exception as e:
             raise RollbackError(f"Migration downgrade failed: {str(e)}") from e
 
@@ -172,7 +172,7 @@ class Migration:
         table_name: str,
         old_col_name: str,
         new_col_name: str,
-        schema: Optional[str] = None
+        schema: Optional[str] = None,
     ) -> None:
         """Queue a column rename operation."""
         alteration = RenameColumn(
@@ -181,10 +181,7 @@ class Migration:
         self._add_upgrade(alteration)
 
     def drop_column(
-        self,
-        table_name: str,
-        col_name: str,
-        schema: Optional[str] = None
+        self, table_name: str, col_name: str, schema: Optional[str] = None
     ) -> None:
         """Queue a column drop operation."""
         alteration = DropColumn(table_name, col_name, self._engine, schema)
@@ -198,12 +195,18 @@ class Migration:
         schema: Optional[str] = None,
         nullable: bool = True,
         default: Optional[Any] = None,
-        server_default: Optional[Any] = None
+        server_default: Optional[Any] = None,
     ) -> None:
         """Queue a column add operation."""
         alteration = AddColumn(
-            table_name, column_name, dtype, self._engine, 
-            schema, nullable, default, server_default
+            table_name,
+            column_name,
+            dtype,
+            self._engine,
+            schema,
+            nullable,
+            default,
+            server_default,
         )
         self._add_upgrade(alteration)
 
@@ -216,36 +219,38 @@ class Migration:
         type_: Optional[Any] = None,
         nullable: Optional[bool] = None,
         default: Optional[Any] = None,
-        server_default: Optional[Any] = None
+        server_default: Optional[Any] = None,
     ) -> None:
         """Queue a column alteration operation."""
         alteration = AlterColumn(
-            table_name, column_name, self._engine, schema,
-            new_column_name, type_, nullable, default, server_default
+            table_name,
+            column_name,
+            self._engine,
+            schema,
+            new_column_name,
+            type_,
+            nullable,
+            default,
+            server_default,
         )
         self._add_upgrade(alteration)
 
     # Table Operations
 
     def rename_table(
-        self,
-        old_table_name: str,
-        new_table_name: str,
-        schema: Optional[str] = None
+        self, old_table_name: str, new_table_name: str, schema: Optional[str] = None
     ) -> None:
         """Queue a table rename operation."""
-        alteration = RenameTable(
-            old_table_name, new_table_name, self._engine, schema
-        )
+        alteration = RenameTable(old_table_name, new_table_name, self._engine, schema)
         self._add_upgrade(alteration)
 
     def copy_table(
         self,
         table: sa.Table,
         new_table_name: str,
-        if_exists: str = 'replace',
+        if_exists: str = "replace",
         schema: Optional[str] = None,
-        copy_data: bool = True
+        copy_data: bool = True,
     ) -> None:
         """Queue a table copy operation."""
         alteration = CopyTable(
@@ -258,7 +263,7 @@ class Migration:
         table_name: str,
         columns: List[Column[Any]],
         schema: Optional[str] = None,
-        if_not_exists: bool = False
+        if_not_exists: bool = False,
     ) -> None:
         """Queue a table creation operation."""
         alteration = CreateTable(
@@ -267,10 +272,7 @@ class Migration:
         self._add_upgrade(alteration)
 
     def drop_table(
-        self,
-        table_name: str,
-        schema: Optional[str] = None,
-        cascade: bool = False
+        self, table_name: str, schema: Optional[str] = None, cascade: bool = False
     ) -> None:
         """Queue a table drop operation."""
         alteration = DropTable(table_name, self._engine, schema, cascade)
@@ -285,12 +287,11 @@ class Migration:
         columns: Union[str, List[str]],
         schema: Optional[str] = None,
         unique: bool = False,
-        if_not_exists: bool = False
+        if_not_exists: bool = False,
     ) -> None:
         """Queue an index creation operation."""
         alteration = CreateIndex(
-            index_name, table_name, columns, self._engine,
-            schema, unique, if_not_exists
+            index_name, table_name, columns, self._engine, schema, unique, if_not_exists
         )
         self._add_upgrade(alteration)
 
@@ -300,7 +301,7 @@ class Migration:
         table_name: str,
         columns: Union[str, List[str]],
         schema: Optional[str] = None,
-        unique: bool = False
+        unique: bool = False,
     ) -> None:
         """Queue an index drop operation."""
         alteration = DropIndex(
@@ -314,12 +315,16 @@ class Migration:
         table_name: str,
         columns: Union[str, List[str]],
         schema: Optional[str] = None,
-        if_not_exists: bool = False
+        if_not_exists: bool = False,
     ) -> None:
         """Queue a unique index creation operation."""
         self.create_index(
-            index_name, table_name, columns, schema, 
-            unique=True, if_not_exists=if_not_exists
+            index_name,
+            table_name,
+            columns,
+            schema,
+            unique=True,
+            if_not_exists=if_not_exists,
         )
 
     # Constraint Operations
@@ -333,13 +338,19 @@ class Migration:
         referent_columns: Union[str, List[str]],
         schema: Optional[str] = None,
         onupdate: Optional[str] = None,
-        ondelete: Optional[str] = None
+        ondelete: Optional[str] = None,
     ) -> None:
         """Queue a foreign key creation operation."""
         alteration = CreateForeignKey(
-            constraint_name, source_table, source_columns,
-            referent_table, referent_columns, self._engine,
-            schema, onupdate, ondelete
+            constraint_name,
+            source_table,
+            source_columns,
+            referent_table,
+            referent_columns,
+            self._engine,
+            schema,
+            onupdate,
+            ondelete,
         )
         self._add_upgrade(alteration)
 
@@ -348,7 +359,7 @@ class Migration:
         constraint_name: str,
         table_name: str,
         columns: Union[str, List[str]],
-        schema: Optional[str] = None
+        schema: Optional[str] = None,
     ) -> None:
         """Queue a unique constraint creation operation."""
         alteration = CreateUniqueConstraint(
@@ -361,7 +372,7 @@ class Migration:
         constraint_name: str,
         table_name: str,
         condition: str,
-        schema: Optional[str] = None
+        schema: Optional[str] = None,
     ) -> None:
         """Queue a check constraint creation operation."""
         alteration = CreateCheckConstraint(
@@ -371,25 +382,20 @@ class Migration:
 
     # Utility Operations
 
-    def execute_sql(
-        self,
-        sql: str,
-        *args,
-        **kwargs
-    ) -> Any:
+    def execute_sql(self, sql: str, *args, **kwargs) -> Any:
         """
         Execute custom SQL directly.
-        
+
         Note: Custom SQL is not reversible and won't be tracked for rollback.
-        
+
         Args:
             sql: SQL statement to execute
             *args: Positional arguments for the SQL
             **kwargs: Keyword arguments for the SQL
-            
+
         Returns:
             Result of the SQL execution
-            
+
         Example:
             >>> migration = Migration(engine)
             >>> migration.execute_sql("UPDATE users SET active = 1 WHERE status = 'verified'")

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transmutation"
-version = "1.0.0"
+version = "1.1.0"
 description = "Comprehensive database migration and schema alteration tool using SQLAlchemy and Alembic"
 readme = "README.md"
 authors = [
@@ -27,7 +27,7 @@ classifiers = [
 keywords = ["database", "migration", "schema", "alembic", "sqlalchemy"]
 requires-python = ">=3.8"
 dependencies = [
-    "fullmetalalchemy>=0.1.0",
+    "fullmetalalchemy>=2.4.0",
     "alembic>=1.7.5",
     "sqlalchemy>=1.4.0,<3.0",
 ]
