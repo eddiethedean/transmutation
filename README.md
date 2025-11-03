@@ -15,6 +15,7 @@ A comprehensive database migration and schema alteration tool built on SQLAlchem
 - **Advanced Features**: Batch operations, transaction management, custom SQL
 - **Validation**: Automatic validation of operations before execution
 - **Error Handling**: Comprehensive exception hierarchy for precise error handling
+- **Flexible Transactions**: Works with both engine and connection parameters with proper transaction handling
 
 ## Installation
 
@@ -352,6 +353,40 @@ migration = tm.Migration(engine, auto_transaction=True)
 migration = tm.Migration(engine, auto_transaction=False)
 ```
 
+### Using Connections Instead of Engine
+
+All operations support passing either an `engine` or a `connection` parameter. When you pass a connection, you maintain full control over transaction boundaries:
+
+```python
+from sqlalchemy import create_engine
+
+engine = create_engine('sqlite:///mydb.db')
+
+# Option 1: Use engine (transmutation manages transactions)
+tm.add_column('users', 'email', str, engine)
+
+# Option 2: Use connection (you manage transactions)
+with engine.begin() as conn:
+    tm.add_column('users', 'email', str, connection=conn)
+    tm.create_index('idx_email', 'users', 'email', connection=conn)
+    # Transaction commits automatically when exiting context
+
+# Option 3: Manual transaction control
+conn = engine.connect()
+trans = conn.begin()
+try:
+    tm.add_column('users', 'email', str, connection=conn)
+    tm.create_index('idx_email', 'users', 'email', connection=conn)
+    trans.commit()
+except Exception:
+    trans.rollback()
+    raise
+finally:
+    conn.close()
+```
+
+**Important**: When you provide a `connection` parameter, transmutation will **never** commit the transaction - you have full control. Transmutation only commits transactions for connections it creates internally when you pass an `engine`.
+
 ## Advanced Usage
 
 ### Schema Support
@@ -363,6 +398,18 @@ All operations support schema specification for databases that use schemas (Post
 tm.add_column('users', 'email', str, engine, schema='public')
 tm.create_index('idx_email', 'users', 'email', engine, schema='public')
 ```
+
+### Connection vs Engine Parameters
+
+All transmutation operations accept either an `engine` or `connection` parameter:
+
+- **Using `engine`**: Transmutation creates its own connections and manages transactions automatically
+- **Using `connection`**: You maintain full control over transaction boundaries - transmutation will never commit your transactions
+
+This allows you to:
+- Group multiple operations in a single transaction
+- Integrate transmutation operations with your existing transaction management
+- Ensure atomicity across multiple operations and libraries
 
 ### Custom SQL Execution
 
@@ -685,7 +732,20 @@ validate_table_exists('users', engine)
 validate_column_exists('users', 'email', engine)
 ```
 
-### 4. Test Your Migrations
+### 4. Use Connection Parameters for Transaction Control
+
+When you need to ensure multiple operations are atomic or integrate with existing transaction code:
+
+```python
+# Group operations in a single transaction
+with engine.begin() as conn:
+    tm.add_column('users', 'email', str, connection=conn)
+    tm.create_index('idx_email', 'users', 'email', connection=conn)
+    # Both operations are in the same transaction
+    # Transaction commits automatically on successful exit
+```
+
+### 5. Test Your Migrations
 
 Always test migrations in a development environment first:
 
