@@ -5,7 +5,7 @@ A comprehensive library for database schema modifications using SQLAlchemy and A
 Provides both direct operations and a migration system with rollback capabilities.
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 # Submodules
 from transmutation import (

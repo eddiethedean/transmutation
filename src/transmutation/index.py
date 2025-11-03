@@ -9,6 +9,7 @@ from transmutation.utils import (
     _get_op,
     _normalize_connection,
     _get_table_with_connection,
+    _commit_if_needed,
     validate_table_exists,
     validate_column_exists,
     index_exists,
@@ -73,9 +74,8 @@ def create_index(
 
         op = _get_op(connection=conn)
         op.create_index(index_name, table_name, columns, unique=unique, schema=schema)  # type: ignore
-        # Commit if we created the connection internally and not in a transaction
-        if should_close and not conn.in_transaction():
-            conn.commit()
+        # Commit if transmutation created the connection and it needs a commit
+        _commit_if_needed(conn, should_close)
 
         return _get_table_with_connection(table_name, conn, schema)
     except Exception as e:
@@ -134,9 +134,8 @@ def drop_index(
 
         op = _get_op(connection=conn)
         op.drop_index(index_name, table_name=table_name, schema=schema)  # type: ignore
-        # Commit if we created the connection internally and not in a transaction
-        if should_close and not conn.in_transaction():
-            conn.commit()
+        # Commit if transmutation created the connection and it needs a commit
+        _commit_if_needed(conn, should_close)
 
         if table_name:
             return _get_table_with_connection(table_name, conn, schema)

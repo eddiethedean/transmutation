@@ -13,6 +13,7 @@ from transmutation.utils import (
     _normalize_connection,
     _get_table_with_connection,
     _normalize_string_type,
+    _commit_if_needed,
     validate_table_exists,
     validate_column_exists,
 )
@@ -94,9 +95,8 @@ def rename_column(
             table_ref = f"{schema}.{table_name}" if schema else table_name
             sql = f"ALTER TABLE {table_ref} CHANGE COLUMN `{old_col_name}` `{new_col_name}` {type_str}"
             conn.execute(text(sql))
-            # Commit only if not in a transaction
-            if not conn.in_transaction():
-                conn.commit()
+            # Commit if transmutation created the connection and it needs a commit
+            _commit_if_needed(conn, should_close)
         else:
             # Standard SQLAlchemy batch operation for other databases
             # batch_alter_table may require a commit even if not in a transaction (e.g., SQLite)
@@ -115,20 +115,10 @@ def rename_column(
                         f"Failed to rename column '{old_col_name}' to '{new_col_name}': {str(batch_error)}"
                     ) from batch_error
                 raise
-            # Commit if needed
+            # Commit if transmutation created the connection and it needs a commit
             # Note: Some databases (e.g., SQLite) require commit even when not in explicit transaction
-            # If connection was provided in a transaction context, the caller manages commits
-            # But batch_alter_table operations need explicit commits for SQLite
-            if should_close:
-                if not was_in_transaction:
-                    conn.commit()
-                elif conn.in_transaction():
-                    # In case batch_alter_table started a transaction
-                    conn.commit()
-            elif not was_in_transaction and conn.in_transaction():
-                # Connection was provided but batch_alter_table started a transaction
-                # Commit it so the operation is visible
-                conn.commit()
+            # If connection was provided by user, they manage commits
+            _commit_if_needed(conn, should_close, was_in_transaction)
 
         # Only verify if explicitly requested
         if verify:
@@ -206,20 +196,10 @@ def drop_column(
         was_in_transaction = conn.in_transaction()
         with op.batch_alter_table(table_name, schema=schema) as batch_op:
             batch_op.drop_column(col_name)  # type: ignore
-        # Commit if needed
+        # Commit if transmutation created the connection and it needs a commit
         # Note: Some databases (e.g., SQLite) require commit even when not in explicit transaction
-        # If connection was provided in a transaction context, the caller manages commits
-        # But batch_alter_table operations need explicit commits for SQLite
-        if should_close:
-            if not was_in_transaction:
-                conn.commit()
-            elif conn.in_transaction():
-                # In case batch_alter_table started a transaction
-                conn.commit()
-        elif not was_in_transaction and conn.in_transaction():
-            # Connection was provided but batch_alter_table started a transaction
-            # Commit it so the operation is visible
-            conn.commit()
+        # If connection was provided by user, they manage commits
+        _commit_if_needed(conn, should_close, was_in_transaction)
 
         # Only verify if explicitly requested
         if verify:
@@ -315,9 +295,8 @@ def add_column(
         )
 
         op.add_column(table_name, col, schema=schema)  # type: ignore
-        # Commit if we created the connection internally and not in a transaction
-        if should_close and not conn.in_transaction():
-            conn.commit()
+        # Commit if transmutation created the connection and it needs a commit
+        _commit_if_needed(conn, should_close)
 
         # Only verify if explicitly requested (prevents metadata locks)
         if verify:
@@ -408,20 +387,10 @@ def alter_column(
                 server_default=server_default,
                 comment=comment,
             )  # type: ignore
-        # Commit if needed
+        # Commit if transmutation created the connection and it needs a commit
         # Note: Some databases (e.g., SQLite) require commit even when not in explicit transaction
-        # If connection was provided in a transaction context, the caller manages commits
-        # But batch_alter_table operations need explicit commits for SQLite
-        if should_close:
-            if not was_in_transaction:
-                conn.commit()
-            elif conn.in_transaction():
-                # In case batch_alter_table started a transaction
-                conn.commit()
-        elif not was_in_transaction and conn.in_transaction():
-            # Connection was provided but batch_alter_table started a transaction
-            # Commit it so the operation is visible
-            conn.commit()
+        # If connection was provided by user, they manage commits
+        _commit_if_needed(conn, should_close, was_in_transaction)
 
         # Only verify if explicitly requested
         if verify:

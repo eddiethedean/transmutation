@@ -11,6 +11,7 @@ from transmutation.utils import (
     _get_op,
     _normalize_connection,
     _get_table_with_connection,
+    _commit_if_needed,
     validate_table_exists,
     validate_column_exists,
     supports_foreign_keys,
@@ -111,20 +112,10 @@ def create_foreign_key(
                 deferrable=deferrable,
                 initially=initially,
             )  # type: ignore
-        # Commit if needed
+        # Commit if transmutation created the connection and it needs a commit
         # Note: Some databases (e.g., SQLite) require commit even when not in explicit transaction
-        # If connection was provided in a transaction context, the caller manages commits
-        # But batch_alter_table operations need explicit commits for SQLite
-        if should_close:
-            if not was_in_transaction:
-                conn.commit()
-            elif conn.in_transaction():
-                # In case batch_alter_table started a transaction
-                conn.commit()
-        elif not was_in_transaction and conn.in_transaction():
-            # Connection was provided but batch_alter_table started a transaction
-            # Commit it so the operation is visible
-            conn.commit()
+        # If connection was provided by user, they manage commits
+        _commit_if_needed(conn, should_close, was_in_transaction)
 
         return _get_table_with_connection(source_table, conn, schema)
     except Exception as e:
@@ -183,20 +174,10 @@ def drop_constraint(
         was_in_transaction = conn.in_transaction()
         with op.batch_alter_table(table_name, schema=schema) as batch_op:
             batch_op.drop_constraint(constraint_name, type_=type_)  # type: ignore
-        # Commit if needed
+        # Commit if transmutation created the connection and it needs a commit
         # Note: Some databases (e.g., SQLite) require commit even when not in explicit transaction
-        # If connection was provided in a transaction context, the caller manages commits
-        # But batch_alter_table operations need explicit commits for SQLite
-        if should_close:
-            if not was_in_transaction:
-                conn.commit()
-            elif conn.in_transaction():
-                # In case batch_alter_table started a transaction
-                conn.commit()
-        elif not was_in_transaction and conn.in_transaction():
-            # Connection was provided but batch_alter_table started a transaction
-            # Commit it so the operation is visible
-            conn.commit()
+        # If connection was provided by user, they manage commits
+        _commit_if_needed(conn, should_close, was_in_transaction)
 
         return _get_table_with_connection(table_name, conn, schema)
     except Exception as e:
@@ -260,20 +241,10 @@ def create_unique_constraint(
         was_in_transaction = conn.in_transaction()
         with op.batch_alter_table(table_name, schema=schema) as batch_op:
             batch_op.create_unique_constraint(constraint_name, columns)  # type: ignore
-        # Commit if needed
+        # Commit if transmutation created the connection and it needs a commit
         # Note: Some databases (e.g., SQLite) require commit even when not in explicit transaction
-        # If connection was provided in a transaction context, the caller manages commits
-        # But batch_alter_table operations need explicit commits for SQLite
-        if should_close:
-            if not was_in_transaction:
-                conn.commit()
-            elif conn.in_transaction():
-                # In case batch_alter_table started a transaction
-                conn.commit()
-        elif not was_in_transaction and conn.in_transaction():
-            # Connection was provided but batch_alter_table started a transaction
-            # Commit it so the operation is visible
-            conn.commit()
+        # If connection was provided by user, they manage commits
+        _commit_if_needed(conn, should_close, was_in_transaction)
 
         return _get_table_with_connection(table_name, conn, schema)
     except Exception as e:
@@ -334,20 +305,10 @@ def create_check_constraint(
         was_in_transaction = conn.in_transaction()
         with op.batch_alter_table(table_name, schema=schema) as batch_op:
             batch_op.create_check_constraint(constraint_name, condition)  # type: ignore
-        # Commit if needed
+        # Commit if transmutation created the connection and it needs a commit
         # Note: Some databases (e.g., SQLite) require commit even when not in explicit transaction
-        # If connection was provided in a transaction context, the caller manages commits
-        # But batch_alter_table operations need explicit commits for SQLite
-        if should_close:
-            if not was_in_transaction:
-                conn.commit()
-            elif conn.in_transaction():
-                # In case batch_alter_table started a transaction
-                conn.commit()
-        elif not was_in_transaction and conn.in_transaction():
-            # Connection was provided but batch_alter_table started a transaction
-            # Commit it so the operation is visible
-            conn.commit()
+        # If connection was provided by user, they manage commits
+        _commit_if_needed(conn, should_close, was_in_transaction)
 
         return _get_table_with_connection(table_name, conn, schema)
     except Exception as e:
@@ -446,20 +407,10 @@ def create_primary_keys(
         with op.batch_alter_table(table_name, schema=schema) as batch_op:
             batch_op.create_unique_constraint(constraint_name, column_names)  # type: ignore
             batch_op.create_primary_key(constraint_name, column_names)  # type: ignore
-        # Commit if needed
+        # Commit if transmutation created the connection and it needs a commit
         # Note: Some databases (e.g., SQLite) require commit even when not in explicit transaction
-        # If connection was provided in a transaction context, the caller manages commits
-        # But batch_alter_table operations need explicit commits for SQLite
-        if should_close:
-            if not was_in_transaction:
-                conn.commit()
-            elif conn.in_transaction():
-                # In case batch_alter_table started a transaction
-                conn.commit()
-        elif not was_in_transaction and conn.in_transaction():
-            # Connection was provided but batch_alter_table started a transaction
-            # Commit it so the operation is visible
-            conn.commit()
+        # If connection was provided by user, they manage commits
+        _commit_if_needed(conn, should_close, was_in_transaction)
 
         return _get_table_with_connection(table_name, conn, schema)
     except Exception as e:
@@ -560,20 +511,10 @@ def replace_primary_keys(
             batch_op.drop_constraint(constraint_name, type_="primary")  # type: ignore
             batch_op.create_unique_constraint(constraint_name, column_names)  # type: ignore
             batch_op.create_primary_key(constraint_name, column_names)  # type: ignore
-        # Commit if needed
+        # Commit if transmutation created the connection and it needs a commit
         # Note: Some databases (e.g., SQLite) require commit even when not in explicit transaction
-        # If connection was provided in a transaction context, the caller manages commits
-        # But batch_alter_table operations need explicit commits for SQLite
-        if should_close:
-            if not was_in_transaction:
-                conn.commit()
-            elif conn.in_transaction():
-                # In case batch_alter_table started a transaction
-                conn.commit()
-        elif not was_in_transaction and conn.in_transaction():
-            # Connection was provided but batch_alter_table started a transaction
-            # Commit it so the operation is visible
-            conn.commit()
+        # If connection was provided by user, they manage commits
+        _commit_if_needed(conn, should_close, was_in_transaction)
 
         return _get_table_with_connection(table_name, conn, schema)
     except Exception as e:

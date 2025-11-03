@@ -13,6 +13,7 @@ from transmutation.utils import (
     _get_op,
     _normalize_connection,
     _get_table_with_connection,
+    _commit_if_needed,
     validate_table_exists,
     table_exists,
 )
@@ -55,9 +56,8 @@ def rename_table(
 
         op = _get_op(connection=conn)
         op.rename_table(old_table_name, new_table_name, schema=schema)  # type: ignore
-        # Commit if we created the connection internally and not in a transaction
-        if should_close and not conn.in_transaction():
-            conn.commit()
+        # Commit if transmutation created the connection and it needs a commit
+        _commit_if_needed(conn, should_close)
 
         return _get_table_with_connection(new_table_name, conn, schema)
     except Exception as e:
@@ -286,12 +286,9 @@ def truncate_table(
             # Fall back to DELETE for databases that don't support TRUNCATE
             conn.execute(text(f"DELETE FROM {full_table_name}"))
 
-        # Commit if we created the connection internally
-        # Note: Some operations (like DELETE) may start a transaction, so check current state
-        if should_close:
-            # If we weren't in a transaction before, or if we are now, commit
-            if not was_in_transaction or conn.in_transaction():
-                conn.commit()
+        # Commit if transmutation created the connection and it needs a commit
+        # Note: Some operations (like DELETE) may start a transaction
+        _commit_if_needed(conn, should_close, was_in_transaction)
 
     except Exception as e:
         if hasattr(e, "__class__") and "ValidationError" in e.__class__.__name__:
