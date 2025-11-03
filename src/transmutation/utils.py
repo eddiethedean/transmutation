@@ -489,33 +489,35 @@ def _normalize_string_type(
 
 
 def _commit_if_needed(
-    connection: Connection, should_close: bool, was_in_transaction: Optional[bool] = None
+    connection: Connection,
+    should_close: bool,
+    was_in_transaction: Optional[bool] = None,
 ) -> None:
     """
     Commit a connection if transmutation created it and it needs a commit.
-    
+
     This helper function enforces the principle that transmutation should only
     commit transactions for connections it creates. User-provided connections
     should never have their transactions committed by transmutation.
-    
+
     Args:
         connection: SQLAlchemy connection
         should_close: True if transmutation created the connection (via _normalize_connection)
         was_in_transaction: Optional, if provided, indicates whether connection was in
             a transaction before the operation. Used for batch operations that may
             start transactions. If None, checks current state for simple operations.
-    
+
     Only commits when:
     - should_close=True (transmutation created the connection)
     - For simple operations (was_in_transaction=None): commit if not in transaction
     - For batch operations: commit if not in transaction before OR if in transaction after
-    
+
     Never commits when should_close=False (user manages their own transactions).
     """
     if not should_close:
         # User provided the connection - never commit, user manages transactions
         return
-    
+
     # Transmutation created the connection - commit if needed
     if was_in_transaction is None:
         # Simple operation: commit if not in a transaction
